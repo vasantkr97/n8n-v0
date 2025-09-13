@@ -15,10 +15,138 @@ datasource db {
 
 
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
-  password     String         
+  id                  String         @id @default(uuid())
+  email               String         @unique
+  password            String         
+
+  workflows           Workflow[]
+  credentials         Credentials[]
+  executions          Execution[]
   
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime        @updatedAt
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 }
+
+
+model Workflow {
+  id                  String         @id @default(uuid())
+  name                String         
+  active              Boolean        @default(false)
+  
+
+  userId              String
+  user                User           @relation(fields: [userId], references: [id])
+
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  nodes               Node[]
+  edges               Edge[]
+  executions          Execution[]
+
+  createAt           DateTime       @default(now())
+  updateAt           DateTime       @updatedAt
+
+}
+
+
+model Node {
+  id                String          @id  @default(cuid())
+  nodeId            String                        //An Unique indentifier within the workflow (e.g "trigger", "http-1")
+  name              String
+  type              String          //hhtp webhook, cron, email, manual execution,gmail, slack
+  position          Json
+  parameters        Json           //Configuration data of type node { urls, methods,}
+
+
+  workflowId        String
+  Workflow          Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  outgoingEdges     Edge[]          @relation("SourceNode")
+  incomingEdges     Edge[]          @relation("TargetNode") //named relationship identifier //find all egdes records where this node is target
+
+  @@unique([workflowId, nodeId])
+
+}
+
+model Edge {
+  id                String         @id  @default(cuid())
+
+  sourceOutput      String         @default("main")
+  targetInput       String         @default("main") //which input port of the target node this edge connect to with data is targetInput
+  
+
+  sourceNodeId      String
+  sourceNode        Node           @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+
+  targetNodeId      String        
+  targetNode        Node           @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade) //Use the targetNodeId to link to the Node
+
+  workflowId        String
+  workflow          Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceNodeId, targetNodeId, sourceOutput, targetInput])
+}
+
+
+model Execution {
+  id                String         @id  @default(cuid())
+  status            String
+  mode              String         // "manual", " trigger", "webhhok"
+  startedAt         DateTime       @default(now())
+  finishedAt        DateTime
+  data              Json           //All execution data and node outputs
+
+  workflowId        String
+  workflow          Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+}
+
+
+model Credentials {
+  id               String          @id  @default(cuid())
+  name             String
+  type             String          //googleApi, stripeApi,"apiKey", "httpHeaderAuth", "customApiKey" etc Credential type Identifier
+  data             String          //sensitive authentication information
+  nodesAccess      Json            @default("[]") //Array of node types that can use this
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+}
+
+// HTTP Request Node:
+// "main"     // Successful response
+// "error"    // HTTP error (404, 500, etc.)
+
+// // IF Node:
+// "true"     // Condition matched
+// "false"    // Condition not matched
+
+// // Switch Node:
+// "0"        // First case matched
+// "1"        // Second case matched  
+// "2"        // Third case matched
+// "fallback" // No cases matched
+
+// // Try-Catch Node:
+// "main"     // Try block succeeded
+// "error"    // Catch block (error occurred)
+
+
+// -- EDGES TABLE
+// ┌─────────────┬──────────────┬──────────────┬──────────────┬─────────────┐
+// │     id      │ sourceNodeId │ targetNodeId │ sourceOutput │ targetInput │
+// ├─────────────┼──────────────┼──────────────┼──────────────┼─────────────┤
+// │ edge-1      │   node-http  │   node-email │     main     │    main     │  ← Success path
+// │ edge-2      │   node-http  │   node-slack │     error    │    main     │  ← Error path  
+// │ edge-3      │   node-if    │   node-gmail │     true     │    main     │  ← True branch
+// │ edge-4      │   node-if    │   node-log   │     false    │    main     │  ← False branch
+// │ edge-5      │   node-split │   node-proc1 │      0       │    main     │  ← First split
+// │ edge-6      │   node-split │   node-proc2 │      1       │    main     │  ← Second split
+// └─────────────┴──────────────┴──────────────┴──────────────┴─────────────┘
