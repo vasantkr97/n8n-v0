@@ -1,5 +1,5 @@
 {
-  "name": "@n8n-v0/db",
+  "name": "@n8n/db",
   "module": "index.ts",
   "type": "module",
   "private": true,

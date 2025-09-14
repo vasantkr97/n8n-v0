@@ -3,17 +3,16 @@ import express, { Response, Request } from "express";
 const router = express.Router();
 
 
-router.post("/create", )
+router.post("/createWorkflow", )
 
-router.get("/getall", )
+router.get("/getallWorkflows", )
 
-router.get("/:id", )
+router.get("/getWorkflowById/:workflowId", )
 
-router.put("/update/:id", )
+router.post("/manual/run/:workflowId", )
 
-router.post("/credential", );
+router.put("/updateWorkflow/:workflowId", )
 
-router.delete("/credential", )
-
+router.delete("/deleteWorkflow/:workflow",)
 
 export default router;

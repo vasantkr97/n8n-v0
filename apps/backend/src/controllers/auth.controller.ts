@@ -1,4 +1,4 @@
-import { prisma } from "@n8n-v0/db"
+import { prisma } from "@n8n/db"
 import { Request, Response } from "express"
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -96,7 +96,7 @@ export const profile = async (req: AuthRequest, res: Response) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: req.user!.id},
-            select: { id: true, email: true, createdAt: true }
+            select: { id: true, email: true}
         })
 
         res.json({ user })

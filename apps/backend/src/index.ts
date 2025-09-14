@@ -15,9 +15,9 @@ app.get("/", (req, res) => {
     res.send("healthy");
 });
 
-app.use("/api/v0/auth", authRouter)
+app.use("/api/auth", authRouter)
 
-app.use("/api/v0/workflow", )
+app.use("/api/workflows", )
 
 
 app.listen(PORT, () => {
