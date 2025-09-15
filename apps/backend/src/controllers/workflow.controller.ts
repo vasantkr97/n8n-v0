@@ -175,7 +175,7 @@ export const updateWorkflow = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Workflow not found or access denied"});
         };
 
-        let webhookId = existingWorkflow.webhookId;
+        let webhookId: string | null = existingWorkflow.webhookId;
         if(triggerType === "WEBHOOK" && webhookData) {
             if(existingWorkflow.webhook) {
                 await prisma.webhook.update({
@@ -198,11 +198,43 @@ export const updateWorkflow = async (req: Request, res: Response) => {
             }
         } else if (triggerType !== "WEBHOOK" && existingWorkflow.webhook) {
             await prisma.webhook.delete({
-                where: { id: existingWorkflow.webhookId }
-            })
-
+                where: { id: existingWorkflow.webhook.id }
+            });
             webhookId = null;
         }
+
+        await prisma.node.deleteMany({
+            where: { workflowId }
+        });
+
+        const updatedWorkflow = await prisma.workflow.update({
+            where: { id: workflowId },
+            data: {
+                title: title ?? existingWorkflow.title,
+                isActive: isActive ?? existingWorkflow.isActive,
+                triggerType: triggerType ?? existingWorkflow.triggerType,
+                webhookId,
+                nodes: {
+                    create: nodes?.map((node: any) => ({
+                        nodeId: node.nodeId,
+                        title: node.title,
+                        position: node.position,
+                        parameters: node.parameters,
+                        connections: node.connections
+                    })) || [],
+                }
+            },
+            include: {
+                nodes: true,
+                webhook: true
+            }
+        });
+        
+        res.status(200).json({
+            success: true,
+            data: updatedWorkflow
+        });
+
     } catch (error) {
         console.error("Error while updating the workflow:", error);
         return res.status(500).json({ error: "Internal server error"})
