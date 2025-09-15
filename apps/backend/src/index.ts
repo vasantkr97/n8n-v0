@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes"
+import workflowRoutes from "./routes/workflow.routes"
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -17,7 +18,9 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRouter)
 
-app.use("/api/workflows", )
+app.use("/api/workflows", workflowRoutes)
+
+app.use("/api/credentials", )
 
 
 app.listen(PORT, () => {

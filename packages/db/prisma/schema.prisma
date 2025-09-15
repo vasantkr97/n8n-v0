@@ -42,10 +42,10 @@ model Workflow {
   nodes               Node[]
   executions          Execution[]
 
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
-  triggerType        TriggerType      //manual, webhook
+  triggerType         TriggerType      //manual, webhook
 
 }
 
@@ -96,8 +96,8 @@ model Credentials {
   userId           String
   user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
 }
 

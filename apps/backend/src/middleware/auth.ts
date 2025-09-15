@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "vasanth";
 
 export const auth = async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.jwt;
-
+    
     if (!token) {
         return res.status(401).json({ msg: "Not Auhenticated"});
     };

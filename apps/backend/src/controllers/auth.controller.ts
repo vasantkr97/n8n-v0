@@ -19,8 +19,8 @@ export const signup = async (req: Request, res: Response) => {
         });
 
         if (exists) {
-            res.status(400).json({ msg: "User already exists"})
-            return
+            return res.status(400).json({ msg: "User already exists"})
+            
         };
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -77,7 +77,8 @@ export const signin = async (req: Request, res: Response) => {
 
         res.json({
             message: "login successfull",
-            user: { id: user.id, email: user.email}
+            user: { id: user.id, email: user.email},
+            token: token
         })
     } catch(error) {
         res.status(500).json({

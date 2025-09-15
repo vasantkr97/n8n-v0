@@ -13,6 +13,10 @@ export const createWorkflow = async (req: Request, res: Response) => {
         const { title, isActive, triggerType, webhookId, nodes } = parsed.data;
 
         const userId  = (req as any).user?.id;
+        console.log(userId)
+        if (!userId) {
+            return res.status(400).json({ msg: "user not authenticated!"})
+        }
 
         const workflow = await prisma.workflow.create({
             data: {
@@ -106,7 +110,7 @@ export const getallWorkflows = async (req: Request, res: Response) => {
 export const getWorkflowById = async (req: Request, res: Response) => {
     try {
         const { workflowId } = req.params;
-        const { userId } = (req as any).user?.id;
+        const userId = (req as any).user?.id;
 
         if (!userId) {
             return res.status(400).json({ error: "UserId  is required"})
@@ -157,6 +161,10 @@ export const updateWorkflow = async (req: Request, res: Response) => {
     try {
         const { workflowId } = req.params;
         const userId = (req as any).user?.id
+
+        if (!userId) {
+            return res.status(500).json({ msg: "user not found"})
+        }
 
         const { title, isActive, nodes, triggerType, webhookData } = req.body;
 
@@ -217,7 +225,7 @@ export const updateWorkflow = async (req: Request, res: Response) => {
                 nodes: {
                     create: nodes?.map((node: any) => ({
                         nodeId: node.nodeId,
-                        title: node.title,
+                        type: node.type,
                         position: node.position,
                         parameters: node.parameters,
                         connections: node.connections
@@ -242,11 +250,12 @@ export const updateWorkflow = async (req: Request, res: Response) => {
 };
 
 export const deleteWorkflow = async (req: Request, res: Response) => {
+    console.log("request from client")
     try {
         const { workflowId } = req.params;
-        const { userId } = (req as any).user?.id;
+        const userId  = (req as any).user?.id;
 
-        if (userId) {
+        if (!userId) {
             return res.status(400).json({ error: "userId is required"});
         };
 
@@ -286,4 +295,67 @@ export const deleteWorkflow = async (req: Request, res: Response) => {
     }
 };
 
+export const ExecuteManually = async (req: Request, res: Response) => {
+    try {
+        const { workflowId } = req.params;
+        const { userId, inputData } = req.body;
 
+        const workflow = await prisma.workflow.findFirst({
+            where: {
+                id: workflowId,
+                userId: userId
+            },
+            include: {
+                nodes: true
+            }
+        });
+
+        if (!workflow) {
+            return res.status(404).json({ error: "Workflow not found or access denied"});
+        }
+
+        //checking is workflow is active
+        if (!workflow.isActive) {
+            return res.status(400).json({ error: "Workflow is not active"});
+        }
+
+        const execution = await prisma.execution.create({
+            data: {
+                status: "PENDING",
+                mode: "MANUAL",
+                data: {
+                    inputData: inputData || {},
+                    startedAt: new Date(),
+                    nodes: workflow.nodes.map(node => ({
+                        nodeId: node.nodeId, //use frontend nodeId for tracking
+                        type: node.type,
+                    }))
+                },
+                workflowId,
+                userId
+            }
+        });
+
+        await prisma.execution.update({
+            where: { id: execution.id },
+            data: {
+                status: "RUNNING",
+                data: {
+                    ...execution.data as any,
+                }
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                executionId: execution.id,
+                status: "RUNNING",
+                message: "Workflow execution started"
+            }
+        })
+    } catch (error) {
+        console.error("Error  running workflow:", error);
+        res.status(500).json({ error: "Internal server error"})
+    }
+}
