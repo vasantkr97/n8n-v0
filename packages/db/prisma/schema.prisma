@@ -42,6 +42,10 @@ model Workflow {
 
   nodes               Node[]
   executions          Execution[]
+  
+  // Essential fields for React Flow canvas
+  viewport            Json?           // { x: 0, y: 0, zoom: 1 } - Canvas view state
+  description         String?         // Workflow description
 
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
@@ -54,20 +58,26 @@ model Workflow {
 model Node {
   id                String          @id  @default(cuid())
   nodeId            String           //frontend generated Id To maintain consistency
-  type              String          //hhtp webhook, cron, email, manual execution,gmail, slack
-  position          Json
+  type              String          //http webhook, cron, email, manual execution,gmail, slack
+  position          Json            // { x: number, y: number }
   parameters        Json           //Configuration data of type node { urls, methods,}
-
-
+  
+  // Essential fields for React Flow
+  label             String?         // Display name for the node
+  data              Json?           // Node data for React Flow (labels, config, etc.)
+  style             Json?           // Node styling (background, border, etc.)
+  
   workflowId        String
   Workflow          Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
-  connections       Json    
+  // Node connections - each node stores its outgoing connections
+  outputs           Json?           // [{ targetNodeId: "node2", targetHandle: "input1", data: {...} }]
+  inputs            Json?           // [{ sourceNodeId: "node1", sourceHandle: "output1", data: {...} }] (optional for validation)
 
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt        
 
-  @@unique([workflowId, id])
+  @@unique([workflowId, nodeId])  // Changed to use nodeId for uniqueness
 
 }
 
@@ -86,9 +96,11 @@ model Execution {
   userId            String
   user              User            @relation(fields: [userId], references: [id])
 
+  results           Json?
+  startedAt         DateTime?
+  finishedAt        DateTime?
   createdAt         DateTime        @default(now())
 }
-
 
 model Credentials {
   id               String           @id  @default(cuid())

@@ -8,10 +8,10 @@ router.use(auth);
 
 router.post("/postCred", postCredentials);
 
-router.get("/getCred", getCredentials),
+router.get("/getCred", getCredentials);
 
 router.put("/updateCred/:CredId", updateCredentials);
 
 router.delete("/deleteCred/:id", deleteCredentials);
 
-export default router
+export default router;

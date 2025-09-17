@@ -10,7 +10,7 @@ const useSignin = () => {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"]}),
     });
 
-    return { error , isPending, Signin: mutate }
+    return { error, isPending, signin: mutate, isLoading: isPending }
 };
 
 export default useSignin;

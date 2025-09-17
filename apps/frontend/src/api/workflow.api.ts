@@ -1,16 +1,28 @@
 import { axiosInstance } from "../lib/axios"; 
 
 export const getWorkflows = async () => {
-    const { data } = await axiosInstance.get("/Workflows")
+    const { data } = await axiosInstance.get("/workflows/getallWorkflows")
     return data
 }
 
 export const getWorkflowById = async (id: string) => {
-    const { data } = await axiosInstance.get("/Workflows/${id")
+    const { data } = await axiosInstance.get(`/workflows/getWorkflowById/${id}`)
     return data
 }
 
-export const createWorkflow = async () => {
-    const { data } = await axiosInstance.post("/Workflows/create")
+export const createWorkflow = async (workflowData: any) => {
+    const { data } = await axiosInstance.post("/workflows/createWorkflow", workflowData)
+    return data
+};
 
+export const deleteWorkflow = async (id: string) => {
+    const { data } = await axiosInstance.delete(`/workflows/deleteWorkflow/${id}`)
+    return data
+};
+
+export const updateWorkflow = async ({ id, data: workflowData }: { id: string, data: any }) => {
+    const { data } = await axiosInstance.put(`/workflows/updateWorkflow/${id}`, workflowData)
+    return data
 }
+
+

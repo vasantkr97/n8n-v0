@@ -5,16 +5,16 @@ const router = express.Router();
 
 
 
-router.post("/createWorkflow",auth, createWorkflow)
+router.post("/createWorkflow", auth, createWorkflow);
 
-router.get("/getallWorkflows",auth, getallWorkflows)
+router.get("/getallWorkflows", auth, getallWorkflows);
 
-router.get("/getWorkflowById/:workflowId",auth, getWorkflowById)
+router.get("/getWorkflowById/:workflowId", auth, getWorkflowById);
 
-router.post("/manual/run/:workflowId",auth, ExecuteManually)
+router.post("/manual/run/:workflowId", auth, ExecuteManually);
 
-router.put("/updateWorkflow/:workflowId",auth, updateWorkflow)
+router.put("/updateWorkflow/:workflowId", auth, updateWorkflow);
 
-router.delete("/deleteWorkflow/:workflowId",auth, deleteWorkflow)
+router.delete("/deleteWorkflow/:workflowId", auth, deleteWorkflow);
 
 export default router;
