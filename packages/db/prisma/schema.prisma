@@ -18,6 +18,7 @@ model User {
   id                  String         @id @default(uuid())
   email               String         @unique
   password            String         
+  username            String
 
   workflows           Workflow[]
   credentials         Credentials[]
@@ -63,42 +64,43 @@ model Node {
 
   connections       Json    
 
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt        
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt        
 
   @@unique([workflowId, id])
 
 }
 
 
+
+
 model Execution {
-  id                String         @id  @default(cuid())
+  id                String          @id  @default(cuid())
   status            ExecStatus
   mode              ExecutionMode        // "manual", " trigger", "webhhok"
   data              Json           //All execution data and node outputs
 
   workflowId        String
-  workflow          Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflow          Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
   userId            String
-  user              User           @relation(fields: [userId], references: [id])
+  user              User            @relation(fields: [userId], references: [id])
 
-  createdAt         DateTime       @default(now())
+  createdAt         DateTime        @default(now())
 }
 
 
 model Credentials {
-  id               String          @id  @default(cuid())
+  id               String           @id  @default(cuid())
   title            String
-  platfrom         Platform          //googleApi, stripeApi,"apiKey", "httpHeaderAuth", "customApiKey" etc Credential type Identifier
+  platform         Platform          //googleApi, stripeApi,"apiKey", "httpHeaderAuth", "customApiKey" etc Credential type Identifier
   data             Json          //sensitive authentication information
 
   userId           String
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
 model Webhook {

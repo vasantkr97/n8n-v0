@@ -6,6 +6,7 @@ import { prisma } from "@n8n-v0/db";
 const JWT_SECRET = process.env.JWT_SECRET || "vasanth";
 
 export const auth = async (req: Request, res: Response, next: NextFunction) => {
+    console.log("Requested URL:", req.url);
     const token = req.cookies.jwt;
     
     if (!token) {

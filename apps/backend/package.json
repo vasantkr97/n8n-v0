@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun "
+    "dev:backend": "bun run src/index.ts",
+    "build:backend": "bun build src/index.ts --outdir dist --target bun "
   },
   "dependencies": {
     "@n8n/db": "workspace:*",

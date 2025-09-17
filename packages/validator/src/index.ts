@@ -22,3 +22,10 @@ export const CreateWorkflowSchema = z.object({
         webhookId: z.string().optional(),
         nodes: z.array(NodeInputSchema).optional(),
 })
+
+
+export const CredentialsSchema = z.object({
+    title: z.string().min(1, "credential title required").max(50),
+    platform: PlatformEnum,
+    data: z.any()
+})
