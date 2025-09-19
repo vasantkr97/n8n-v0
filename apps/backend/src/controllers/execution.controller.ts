@@ -106,11 +106,11 @@ export const cancelExecution = async (req: Request, res: Response) => {
       },
       data: {
         status: 'FAILED', // Using FAILED for now, we can add CANCELLED later
-        // finishedAt: new Date(), // TODO: Regenerate Prisma client if this field exists in schema
-        // results: {
-        //   error: "Execution cancelled by user",
-        //   cancelled: true
-        // } // TODO: Regenerate Prisma client if this field exists in schema
+        finishedAt: new Date(),
+        results: {
+          error: "Execution cancelled by user",
+          cancelled: true
+        }
       }
     });
 

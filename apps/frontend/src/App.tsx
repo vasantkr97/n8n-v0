@@ -67,17 +67,14 @@ export default function App() {
         <Route 
           path="/signin" 
           element={
-            <PublicRoute>
               <Signin />
-            </PublicRoute>
           } 
         />
+
         <Route 
           path="/signup" 
           element={
-            <PublicRoute>
               <Signup />
-            </PublicRoute>
           } 
         />
         
@@ -85,43 +82,35 @@ export default function App() {
         <Route 
           path="/dashboard" 
           element={
-            <ProtectedRoute>
               <DashboardLayout />
-            </ProtectedRoute>
           } 
         />
         <Route 
           path="/workflow/:id" 
           element={
-            <ProtectedRoute>
               <DashboardLayout />
-            </ProtectedRoute>
           } 
         />
         <Route 
           path="/credentials" 
           element={
-            <ProtectedRoute>
               <div className="flex h-screen">
                 <Sidebar />
                 <div className="flex-1">
                   <Credentials />
                 </div>
               </div>
-            </ProtectedRoute>
           } 
         />
         <Route 
           path="/executions" 
           element={
-            <ProtectedRoute>
               <div className="flex h-screen">
                 <Sidebar />
                 <div className="flex-1">
                   <Executions />
                 </div>
               </div>
-            </ProtectedRoute>
           } 
         />
         

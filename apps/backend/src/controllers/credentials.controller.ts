@@ -119,7 +119,6 @@ export const deleteCredentials = async (req: Request, res: Response) => {
 
         const credentials = await prisma.credentials.delete({
             where: {
-                userId,
                 id: id,
             }
         })

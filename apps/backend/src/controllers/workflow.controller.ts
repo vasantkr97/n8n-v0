@@ -1,22 +1,15 @@
 import { Request, Response} from "express";
-import { CreateWorkflowSchema } from "@n8n/validator";
 import { prisma } from "@n8n/db";
 
 export const createWorkflow = async (req: Request, res: Response) => {
     try {
-        const parsed = CreateWorkflowSchema.safeParse(req.body);
+        const { title, isActive, triggerType, webhook, nodes, connections } = req.body;
 
-        if (!parsed.success) {
-            return res.status(400).json({ success: false, error: parsed.error })
-        }
-
-        const { title, isActive, triggerType, webhookId, nodes } = parsed.data;
-
-        const userId  = (req as any).user?.id;
-        console.log(userId)
+        const userId = req.user!.id
         if (!userId) {
-            return res.status(400).json({ msg: "user not authenticated!"})
-        }
+            return res.status(400).json({ msg: "User not authenticated"})
+        };
+     
 
         const workflow = await prisma.workflow.create({
             data: {
@@ -24,20 +17,8 @@ export const createWorkflow = async (req: Request, res: Response) => {
                 isActive: isActive ?? false,
                 triggerType,
                 userId,
-                webhookId,
-                nodes: {
-                       create: nodes?.map((n) => ({
-                        nodeId: n.nodeId,
-                        type: n.type,
-                        position: n.position,
-                        parameters: n.parameters,
-                        connections: n.connections,
-                       })) || []
-                },
-            },
-            include: {
-                nodes: true,
-                webhook: true
+                nodes: nodes ?? {},
+                connections: connections ?? {},
             }
         });
 
@@ -64,36 +45,14 @@ export const getallWorkflows = async (req: Request, res: Response) => {
                 userId: userId as string
             },
             include: {
-                nodes: {
-                    select: {
-                        id: true,
-                        nodeId: true,
-                        type: true,
-                        position: true
-                    }
-                },
-                webhook: true,
                 executions: {
-                    select: {
-                        id: true,
-                        status: true,
-                        mode: true,
-                    },
-                    orderBy: {
-                        createdAt: "desc"
-                    },
+                    select: { id: true, status: true, mode: true },
+                    orderBy: { createdAt: "desc" },
                     take: 5
                 },
-                _count: {
-                    select: {
-                        executions: true,
-                        nodes: true
-                    }
-                }
+                _count: { select: { executions: true } },
             },
-            orderBy: {
-                updatedAt: "desc"
-            }
+            orderBy: {  updatedAt: "desc" }
         });
 
         res.status(200).json({
@@ -122,12 +81,6 @@ export const getWorkflowById = async (req: Request, res: Response) => {
                 userId: userId 
             },
             include: {
-                nodes: {
-                    orderBy: {
-                        createdAt: "asc"
-                    }
-                },
-                webhook: true,
                 executions: {
                     orderBy: {
                         createdAt: 'desc'
@@ -166,16 +119,12 @@ export const updateWorkflow = async (req: Request, res: Response) => {
             return res.status(500).json({ msg: "user not found"})
         }
 
-        const { title, isActive, nodes, triggerType, webhookData } = req.body;
+        const { title, isActive, nodes, triggerType, connections } = req.body;
 
         const existingWorkflow = await prisma.workflow.findFirst({
             where: {
                 id: workflowId,
-                userId: userId
-            },
-            include: {
-                nodes: true,
-                webhook: true
+                userId
             }
         });
 
@@ -183,59 +132,16 @@ export const updateWorkflow = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Workflow not found or access denied"});
         };
 
-        let webhookId: string | null = existingWorkflow.webhookId;
-        if(triggerType === "WEBHOOK" && webhookData) {
-            if(existingWorkflow.webhook) {
-                await prisma.webhook.update({
-                    where: { id: existingWorkflow.webhook.id },
-                    data: {
-                        name: webhookData.name,
-                        path: webhookData.path,
-                        method: webhookData.method
-                    },
-                })
-            } else {
-                const newWebhook = await prisma.webhook.create({
-                    data: {
-                        name: webhookData.name,
-                        path: webhookData.path,
-                        method: webhookData.method
-                    }
-                });
-                webhookId = newWebhook.id;
-            }
-        } else if (triggerType !== "WEBHOOK" && existingWorkflow.webhook) {
-            await prisma.webhook.delete({
-                where: { id: existingWorkflow.webhook.id }
-            });
-            webhookId = null;
-        }
-
-        await prisma.node.deleteMany({
-            where: { workflowId }
-        });
-
+        
         const updatedWorkflow = await prisma.workflow.update({
             where: { id: workflowId },
             data: {
                 title: title ?? existingWorkflow.title,
                 isActive: isActive ?? existingWorkflow.isActive,
                 triggerType: triggerType ?? existingWorkflow.triggerType,
-                webhookId,
-                nodes: {
-                    create: nodes?.map((node: any) => ({
-                        nodeId: node.nodeId,
-                        type: node.type,
-                        position: node.position,
-                        parameters: node.parameters,
-                        connections: node.connections
-                    })) || [],
-                }
+                nodes: nodes ?? existingWorkflow.nodes,
+                connections: connections ?? existingWorkflow.connections,
             },
-            include: {
-                nodes: true,
-                webhook: true
-            }
         });
         
         res.status(200).json({
@@ -263,23 +169,12 @@ export const deleteWorkflow = async (req: Request, res: Response) => {
             where: {
                 id: workflowId,
                 userId: userId
-            },
-            include: {
-                webhook: true
             }
         })
 
         if (!workflow) {
             return res.status(404).json({ error: "Workflow not found or access denied"})
-        }
-
-        if (workflow.webhook) {
-            await prisma.webhook.delete({
-                where: {
-                    id: workflow.webhook.id
-                }
-            })
-        }
+        };
 
         await prisma.workflow.delete({
             where: { id: workflowId }
@@ -456,7 +351,7 @@ async function simulateWorkflowExecution(executionId: string, workflow: any) {
                 finishedAt: new Date(),
                 results: {
                     error: 'Execution simulation failed',
-                    details: error
+                    details: String(error)
                 }
             }
         });

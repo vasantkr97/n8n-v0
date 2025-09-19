@@ -96,7 +96,10 @@ export const useWorkflowManagement = () => {
           type: node.data?.type || 'default',
           position: node.position,
           parameters: node.data || {},
-          outputs: [], // Will be populated from edges
+          label: node.data?.label || node.data?.type || 'Node',
+          data: node.data || {},
+          style: node.data?.style || {},
+          edges: currentWorkflow.edges.filter(edge => edge.source === node.id || edge.target === node.id)
         }))
       };
 
@@ -131,7 +134,10 @@ export const useWorkflowManagement = () => {
             type: node.data?.type || 'default',
             position: node.position,
             parameters: node.data || {},
-            outputs: [], // Will be populated from edges
+            label: node.data?.label || node.data?.type || 'Node',
+            data: node.data || {},
+            style: node.data?.style || {},
+            edges: currentWorkflow.edges.filter(edge => edge.source === node.id || edge.target === node.id)
           }))
         };
         

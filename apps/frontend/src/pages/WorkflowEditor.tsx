@@ -267,19 +267,37 @@ export default function WorkflowEditor() {
 
     // Handle node selection from selector
     const handleNodeSelect = useCallback((nodeType: string) => {
-      if (!sourceNodeForConnection) return;
-
-      const sourceNode = nodes.find(n => n.id === sourceNodeForConnection);
-      if (!sourceNode) return;
-
       // Create new node ID
       const newNodeId = `${nodeType}-${Date.now()}`;
       
-      // Position new node to the right of source node
-      const newPosition = {
-        x: sourceNode.position.x + 300,
-        y: sourceNode.position.y
-      };
+      let newPosition;
+      let newEdge = null;
+
+      if (sourceNodeForConnection) {
+        // Adding node connected to existing node
+        const sourceNode = nodes.find(n => n.id === sourceNodeForConnection);
+        if (!sourceNode) return;
+
+        // Position new node to the right of source node
+        newPosition = {
+          x: sourceNode.position.x + 300,
+          y: sourceNode.position.y
+        };
+
+        // Create connection edge
+        newEdge = createN8nEdge(
+          `e${sourceNodeForConnection}-${newNodeId}`,
+          sourceNodeForConnection,
+          newNodeId,
+          { itemCount: 1, label: 'connected' }
+        );
+      } else {
+        // Adding first node - use selector position
+        newPosition = {
+          x: nodeSelectorPosition.x - 100, // Center the node
+          y: nodeSelectorPosition.y - 50
+        };
+      }
 
       // Create new node
       const newNode = createN8nNode(
@@ -292,22 +310,16 @@ export default function WorkflowEditor() {
         }
       );
 
-      // Create connection edge
-      const newEdge = createN8nEdge(
-        `e${sourceNodeForConnection}-${newNodeId}`,
-        sourceNodeForConnection,
-        newNodeId,
-        { itemCount: 1, label: 'connected' }
-      );
-
-      // Add node and edge
+      // Add node and edge (if exists)
       setNodes(nds => [...nds, newNode]);
-      setEdges(eds => [...eds, newEdge]);
+      if (newEdge) {
+        setEdges(eds => [...eds, newEdge]);
+      }
 
       // Close selector
       setShowNodeSelector(false);
       setSourceNodeForConnection(null);
-    }, [sourceNodeForConnection, nodes, setNodes, setEdges]);
+    }, [sourceNodeForConnection, nodes, nodeSelectorPosition, setNodes, setEdges]);
 
     // Close node selector
     const handleCloseNodeSelector = useCallback(() => {
@@ -315,11 +327,22 @@ export default function WorkflowEditor() {
       setSourceNodeForConnection(null);
     }, []);
 
-    // Handle canvas click - close add button
-    const onPaneClick = useCallback(() => {
+    // Handle canvas click - close add button or show node selector for first node
+    const onPaneClick = useCallback((event: React.MouseEvent) => {
       setShowAddButton(false);
       setShowNodeSelector(false);
-    }, []);
+      
+      // If no nodes exist, show node selector at click position
+      if (nodes.length === 0) {
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        setNodeSelectorPosition({ x, y });
+        setShowNodeSelector(true);
+        setSourceNodeForConnection(null); // No source for first node
+      }
+    }, [nodes.length]);
 
     return (
         <div className="h-full w-full flex flex-col">
@@ -350,21 +373,33 @@ export default function WorkflowEditor() {
                     nodeTypes={nodeTypes as any}
                     edgeTypes={edgeTypes as any}
                     defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                    minZoom={0.2}
-                    maxZoom={2}
+                    minZoom={0.1}
+                    maxZoom={4}
                     attributionPosition="bottom-left"
-                    fitView
+                    fitView={nodes.length > 0}
                     fitViewOptions={{
-                        padding: 0.3,
+                        padding: 0.2,
                         includeHiddenNodes: false,
                     }}
+                    deleteKeyCode={['Backspace', 'Delete']}
+                    multiSelectionKeyCode={['Meta', 'Ctrl']}
+                    selectionKeyCode={['Shift']}
+                    panOnDrag={true}
+                    selectNodesOnDrag={false}
+                    nodesDraggable={true}
+                    nodesConnectable={true}
+                    elementsSelectable={true}
+                    zoomOnScroll={true}
+                    zoomOnPinch={true}
+                    panOnScroll={false}
+                    preventScrolling={false}
                 >
                     <Background 
                         variant={BackgroundVariant.Dots}
                         gap={20}
                         size={1}
                         color="#d1d5db"
-                        style={{ backgroundColor: '#f3f4f6' }}
+                        style={{ backgroundColor: 'linear-gradient(to bottom right, #000000, #434343)' }}
                     />
                     <Controls 
                         position="bottom-right"
@@ -390,10 +425,13 @@ export default function WorkflowEditor() {
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="text-center">
                             <div className="text-gray-400 text-6xl mb-4">⚡</div>
-                            <h3 className="text-xl font-medium text-gray-700 mb-2">Add your first step</h3>
-                            <p className="text-gray-500 max-w-md">
-                                Click anywhere on the canvas to start building your workflow
+                            <h3 className="text-xl font-medium text-gray-700 mb-2">Start Building Your Workflow</h3>
+                            <p className="text-gray-500 max-w-md mb-4">
+                                Click anywhere on the canvas to add your first node
                             </p>
+                            <div className="text-sm text-gray-400">
+                                Choose from triggers, actions, and integrations
+                            </div>
                         </div>
                     </div>
                 )}
