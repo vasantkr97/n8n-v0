@@ -1,7 +1,7 @@
 import React, { useState } from "react"
-import { useExecuteWorkflow } from "../hooks/workflowHooks/useExecuteWorkflow"
-import { useExecutionStatus } from "../hooks/workflowHooks/useExecutionStatus"
-import { useCancelExecution } from "../hooks/workflowHooks/useCancelExecution"
+import { useExecuteWorkflow } from "../hooks/executionHooks/useExecuteWorkflow"
+import { useExecutionStatus } from "../hooks/executionHooks/useExecutionStatus"
+import { useCancelExecution } from "../hooks/executionHooks/useCancelExecution"
 
 interface ExecutionControlsProps {
   workflowId: string

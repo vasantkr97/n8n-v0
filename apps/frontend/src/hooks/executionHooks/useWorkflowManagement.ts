@@ -4,8 +4,8 @@ import {
   getWorkflows, 
   createWorkflow, 
   updateWorkflow
-} from '../../api/workflow.api';
-import { executeWorkflow } from '../../api/execution';
+} from '../../apiServices/workflow.api';
+import { executeWorkflow } from '../../apiServices/execution.api';
 
 export interface WorkflowData {
   id?: string;

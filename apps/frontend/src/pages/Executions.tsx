@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getAllExecutions } from '../api/execution';
+import { getAllExecutions } from '../apiServices/execution.api';
 
 interface Execution {
   id: string;

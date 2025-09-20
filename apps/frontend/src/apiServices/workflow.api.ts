@@ -20,8 +20,8 @@ export const deleteWorkflow = async (id: string) => {
     return data
 };
 
-export const updateWorkflow = async ({ id, data: workflowData }: { id: string, data: any }) => {
-    const { data } = await axiosInstance.put(`/workflows/updateWorkflow/${id}`, workflowData)
+export const updateWorkflow = async ({ workflowId, updatedWorkflow }: { workflowId: string, updatedWorkflow: any }) => {
+    const { data } = await axiosInstance.put(`/workflows/updateWorkflow/${workflowId}`, updatedWorkflow)
     return data
 }
 

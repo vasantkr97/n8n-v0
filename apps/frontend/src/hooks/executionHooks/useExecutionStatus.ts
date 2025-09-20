@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getExecutionStatus } from "../../api/execution"
+import { getExecutionStatus } from "../../apiServices/execution.api"
 
 export const useExecutionStatus = (executionId: string | null) => {
   return useQuery({

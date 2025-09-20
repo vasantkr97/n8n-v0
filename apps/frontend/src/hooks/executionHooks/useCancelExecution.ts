@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { cancelExecution } from "../../api/execution"
+import { cancelExecution } from "../../apiServices/execution.api"
 // import { toast } from "react-hot-toast" // Temporarily commented out
 
 export const useCancelExecution = () => {

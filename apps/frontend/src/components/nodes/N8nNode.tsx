@@ -1,196 +1,91 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 
-// Interface moved to nodeTypes.ts for better organization
-
+// N8nNode component represents a visual node in the flow graph
 const N8nNode = memo(({ data, selected }: NodeProps) => {
+  // Determine node color based on its state
   const getNodeColor = () => {
-    if (data?.hasError) return '#ff6b6b';
-    if (data?.isSuccess) return '#51cf66';
-    if (data?.isExecuting) return '#339af0';
-    return (data as any)?.color || '#868e96';
+    if (data?.hasError) return '#ff6b6b'; // Red for error
+    if (data?.isSuccess) return '#51cf66'; // Green for success
+    if (data?.isExecuting) return '#339af0'; // Blue for executing
+    return (data as any)?.color || '#868e96'; // Default gray
   };
 
+  // Determine icon to show based on state
   const getStatusIcon = () => {
     if (data?.hasError) return '❌';
     if (data?.isSuccess) return '✅';
     if (data?.isExecuting) return '⏳';
-    return (data as any)?.icon || '⚙️';
+    return (data as any)?.icon || '⚙️'; // Default gear icon
   };
+  console.log("Node type:", data);
+  const isTrigger = Boolean((data as any)?.isTrigger);
 
   return (
-    <div className={`n8n-node ${selected ? 'selected' : ''}`}>
-      {/* Input Handle */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="n8n-handle n8n-handle-input"
-        style={{
-          background: '#fff',
-          border: '2px solid #d1d5db',
-          width: '12px',
-          height: '12px',
-          left: '-6px'
-        }}
-      />
-      
-      {/* Node Content */}
-      <div 
-        className="n8n-node-content"
-        style={{
-          backgroundColor: '#fff',
-          border: `2px solid ${selected ? '#007acc' : '#e5e7eb'}`,
-          borderRadius: '8px',
-          padding: '12px 16px',
-          minWidth: '200px',
-          boxShadow: selected 
-            ? '0 4px 12px rgba(0, 122, 204, 0.15)' 
-            : '0 2px 8px rgba(0, 0, 0, 0.1)',
-          transition: 'all 0.2s ease',
-          position: 'relative'
-        }}
+    <div className="relative">
+      {/* Square Node Container */}
+      <div
+        className={`relative bg-gray-800 rounded-lg w-32 h-28 border-2 transition-all duration-300 flex items-center justify-center ${
+          selected 
+            ? 'border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-105' 
+            : 'border-gray-600 shadow-[0_4px_12px_rgba(0,0,0,0.4)]'
+        } hover:border-gray-400 hover:shadow-[0_6px_16px_rgba(0,0,0,0.6)] hover:scale-102`}
       >
-        {/* Status Indicator */}
-        <div 
-          className="n8n-node-status"
-          style={{
-            position: 'absolute',
-            top: '-8px',
-            right: '-8px',
-            width: '20px',
-            height: '20px',
-            backgroundColor: getNodeColor(),
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '10px',
-            border: '2px solid #fff',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-          }}
+        {/* Input Handle - left edge center */}
+        {!isTrigger && (
+          <Handle
+            type="target"
+            position={Position.Left}
+            className="absolute top-1/2 -translate-y-1/2 -left-2 
+                       bg-gray-700 border-2 border-gray-500 w-3 h-3 rounded-full
+                       hover:scale-125 hover:border-blue-400 transition-all duration-200 hover:bg-gray-600"
+          />
+        )}
+
+        {/* Output Handle - right edge center */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="absolute top-1/2 -translate-y-1/2 -right-2 
+                     bg-gray-700 border-2 border-gray-500 w-2 h-2 
+                     hover:scale-125 hover:border-blue-400 transition-all duration-200 hover:bg-gray-600"
+        />
+
+        {/* Status Indicator Circle (top-right corner) */}
+        <div
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-800 shadow-lg"
+          style={{ backgroundColor: getNodeColor() }}
         >
           {(data as any)?.isExecuting && (
-            <div className="n8n-spinner" style={{
-              width: '12px',
-              height: '12px',
-              border: '2px solid #fff',
-              borderTop: '2px solid transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
+            <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin" />
           )}
         </div>
 
-        {/* Node Header */}
-        <div className="n8n-node-header" style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '4px'
-        }}>
-          <span 
-            className="n8n-node-icon"
-            style={{
-              fontSize: '16px',
-              marginRight: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '24px',
-              height: '24px',
-              borderRadius: '4px',
-              backgroundColor: `${getNodeColor()}20`
-            }}
-          >
-            {getStatusIcon()}
-          </span>
-          <div>
-            <div 
-              className="n8n-node-label"
-              style={{
-                fontWeight: '600',
-                fontSize: '14px',
-                color: '#374151',
-                lineHeight: '1.2'
-              }}
-            >
-              {(data as any)?.label}
-            </div>
-            <div 
-              className="n8n-node-type"
-              style={{
-                fontSize: '12px',
-                color: '#6b7280',
-                textTransform: 'capitalize'
-              }}
-            >
-              {(data as any)?.type}
-            </div>
-          </div>
+        {/* Large Icon in Center */}
+        <span className="text-3xl" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
+          {getStatusIcon()}
+        </span>
+      </div>
+
+      {/* Text Below Node */}
+      <div className="mt-2 flex flex-col items-center text-center max-w-20 mx-auto">
+        <div className="text-xs font-medium text-gray-200 leading-tight truncate">
+          {(data as any)?.label}
         </div>
-
-        {/* Node Description */}
-        {(data as any)?.description && (
-          <div 
-            className="n8n-node-description"
-            style={{
-              fontSize: '12px',
-              color: '#9ca3af',
-              marginTop: '4px',
-              lineHeight: '1.3'
-            }}
-          >
-            {(data as any)?.description}
-          </div>
-        )}
-
-        {/* Execution Status Text */}
+        <div className="text-[10px] text-gray-400 capitalize mt-0.5 truncate">
+          {(data as any)?.type}
+        </div>
         {(data as any)?.isExecuting && (
-          <div style={{
-            fontSize: '11px',
-            color: '#339af0',
-            marginTop: '4px',
-            fontWeight: '500'
-          }}>
+          <div className="text-[9px] text-blue-400 mt-0.5 font-medium animate-pulse">
             Executing...
           </div>
         )}
+        {(data as any)?.description && !((data as any)?.isExecuting) && (
+          <div className="text-[9px] text-gray-500 mt-0.5 leading-tight truncate max-w-full">
+            {(data as any)?.description}
+          </div>
+        )}
       </div>
-      
-      {/* Output Handle */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="n8n-handle n8n-handle-output"
-        style={{
-          background: '#fff',
-          border: '2px solid #d1d5db',
-          width: '12px',
-          height: '12px',
-          right: '-6px'
-        }}
-      />
-
-      {/* CSS for animations */}
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        .n8n-node:hover .n8n-node-content {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-        }
-        
-        .n8n-handle:hover {
-          transform: scale(1.2);
-          border-color: #007acc !important;
-        }
-        
-        .n8n-node.selected .n8n-handle {
-          border-color: #007acc;
-        }
-      `}</style>
     </div>
   );
 });

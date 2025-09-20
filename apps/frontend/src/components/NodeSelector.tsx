@@ -6,6 +6,7 @@ interface NodeSelectorProps {
   onNodeSelect: (nodeType: string) => void;
   onClose: () => void;
   isVisible: boolean;
+  isFirstNode: boolean;
 }
 
 const nodeCategories = {
@@ -15,18 +16,20 @@ const nodeCategories = {
   'Apps': ['gmail', 'slack']
 };
 
-export const NodeSelector = ({ position, onNodeSelect, onClose, isVisible }: NodeSelectorProps) => {
+export const NodeSelector = ({ position, onNodeSelect, onClose, isVisible, isFirstNode }: NodeSelectorProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Triggers');
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!isVisible) return null;
 
+  const availableCategories = isFirstNode ? { Triggers: nodeCategories.Triggers } : nodeCategories;
+
   const filteredNodes = searchTerm 
-    ? Object.values(nodeCategories).flat().filter(nodeType => 
+    ? Object.values(availableCategories).flat().filter(nodeType => 
         nodeType.toLowerCase().includes(searchTerm.toLowerCase()) ||
         getNodeConfig(nodeType).label.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    : nodeCategories[selectedCategory as keyof typeof nodeCategories] || [];
+    : availableCategories[selectedCategory as keyof typeof availableCategories] || [];
 
   return (
     <>
@@ -73,7 +76,7 @@ export const NodeSelector = ({ position, onNodeSelect, onClose, isVisible }: Nod
           {/* Categories (only show if no search) */}
           {!searchTerm && (
             <div className="w-32 bg-gray-50 border-r border-gray-200 overflow-y-auto">
-              {Object.keys(nodeCategories).map((category) => (
+              {Object.keys(availableCategories).map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}

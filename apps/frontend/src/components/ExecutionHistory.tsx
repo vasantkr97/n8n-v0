@@ -1,6 +1,6 @@
 import React from "react"
-import { useExecutionHistory } from "../hooks/workflowHooks/useExecutionHistory"
-import { useCancelExecution } from "../hooks/workflowHooks/useCancelExecution"
+import { useExecutionHistory } from "../hooks/executionHooks/useExecutionHistory"
+import { useCancelExecution } from "../hooks/executionHooks/useCancelExecution"
 
 interface ExecutionHistoryProps {
   workflowId: string

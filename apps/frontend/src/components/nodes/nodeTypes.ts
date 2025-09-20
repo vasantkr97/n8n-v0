@@ -49,67 +49,78 @@ export const nodeConfigs = {
     icon: '▶️',
     color: '#007acc',
     label: 'Manual Trigger',
-    description: 'Manually trigger workflow'
+    description: 'Manually trigger workflow',
+    isTrigger: true
   },
   webhook: {
     icon: '🔗',
     color: '#28a745',
     label: 'Webhook',
-    description: 'Listen for HTTP requests'
+    description: 'Listen for HTTP requests',
+    isTrigger: true
   },
   http: {
     icon: '🌐',
     color: '#6f42c1',
     label: 'HTTP Request',
-    description: 'Make HTTP requests'
+    description: 'Make HTTP requests',
+    isTrigger: false
   },
   email: {
     icon: '📧',
     color: '#dc3545',
     label: 'Email',
-    description: 'Send email messages'
+    description: 'Send email messages',
+    isTrigger: false
   },
   cron: {
     icon: '⏰',
     color: '#fd7e14',
     label: 'Cron',
-    description: 'Schedule based trigger'
+    description: 'Schedule based trigger',
+    isTrigger: true
   },
   gmail: {
     icon: '📮',
     color: '#ea4335',
     label: 'Gmail',
-    description: 'Gmail integration'
+    description: 'Gmail integration',
+    isTrigger: false
   },
   slack: {
     icon: '💬',
     color: '#4a154b',
     label: 'Slack',
-    description: 'Slack integration'
+    description: 'Slack integration',
+    isTrigger: false
   },
   function: {
     icon: '⚙️',
     color: '#6c757d',
     label: 'Function',
-    description: 'JavaScript function'
+    description: 'JavaScript function',
+    isTrigger: false
   },
   condition: {
     icon: '❓',
     color: '#17a2b8',
     label: 'IF',
-    description: 'Conditional logic'
+    description: 'Conditional logic',
+    isTrigger: false
   },
   merge: {
     icon: '🔀',
     color: '#20c997',
     label: 'Merge',
-    description: 'Merge data streams'
+    description: 'Merge data streams',
+    isTrigger: false
   },
   switch: {
     icon: '🔁',
     color: '#ffc107',
     label: 'Switch',
-    description: 'Route data conditionally'
+    description: 'Route data conditionally',
+    isTrigger: false
   }
 };
 

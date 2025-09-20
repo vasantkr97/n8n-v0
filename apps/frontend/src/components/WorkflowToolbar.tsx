@@ -32,9 +32,7 @@ export const WorkflowToolbar = ({
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleTitleSubmit();
-    }
+    if (e.key === 'Enter') handleTitleSubmit();
     if (e.key === 'Escape') {
       setTempTitle(workflowTitle);
       setIsEditingTitle(false);
@@ -42,7 +40,7 @@ export const WorkflowToolbar = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
+    <div className="flex items-center justify-between p-2 bg-gray-900 border-b border-gray-700 shadow-md">
       {/* Left side - Title and controls */}
       <div className="flex items-center space-x-4">
         {/* Workflow Title */}
@@ -54,12 +52,12 @@ export const WorkflowToolbar = ({
               onChange={(e) => setTempTitle(e.target.value)}
               onBlur={handleTitleSubmit}
               onKeyDown={handleTitleKeyDown}
-              className="text-xl font-semibold bg-transparent border-b-2 border-blue-500 focus:outline-none min-w-48"
+              className="text-xl font-semibold bg-gray-800 text-white border-b-2 border-blue-500 focus:outline-none  px-1 py-0.5"
               autoFocus
             />
           ) : (
             <h1
-              className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+              className="text-base font-semibold text-white cursor-pointer hover:text-blue-400 transition-colors"
               onClick={() => setIsEditingTitle(true)}
               title="Click to edit workflow name"
             >
@@ -68,22 +66,22 @@ export const WorkflowToolbar = ({
           )}
           <button
             onClick={() => setIsEditingTitle(true)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-200 transition-colors"
             title="Edit workflow name"
           >
-            ✏️
+      
           </button>
         </div>
 
         {/* Active Status Toggle */}
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600">Status:</span>
+          <span className="text-sm text-gray-300">Status:</span>
           <button
             onClick={onToggleActive}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
               isWorkflowActive
-                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-green-700 text-green-100 hover:bg-green-600'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
           >
             {isWorkflowActive ? '🟢 Active' : '⚪ Inactive'}
@@ -92,33 +90,31 @@ export const WorkflowToolbar = ({
       </div>
 
       {/* Right side - Action buttons */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-3">
         {/* New Workflow */}
         <button
           onClick={onNewWorkflow}
-          className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center space-x-2"
+          className="px-3 py-1.5 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex items-center space-x-2"
           title="Create new workflow"
         >
-          <span>📄</span>
-          <span>New</span>
+          <span className='font-semibold'>New Workflow</span>
         </button>
 
         {/* Save Workflow */}
         <button
           onClick={onSaveWorkflow}
           disabled={isSaving}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+          className="px-3 py-1 bg-blue-700 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-center space-x-2"
           title="Save workflow"
         >
           {isSaving ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               <span>Saving...</span>
             </>
           ) : (
             <>
-              <span>💾</span>
-              <span>Save</span>
+              <span className='font-semibold'>Save</span>
             </>
           )}
         </button>
@@ -127,18 +123,17 @@ export const WorkflowToolbar = ({
         <button
           onClick={onExecuteWorkflow}
           disabled={!isWorkflowActive || isExecuting}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+          className="px-3 py-1 bg-green-700 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
           title={isWorkflowActive ? "Execute workflow" : "Activate workflow to execute"}
         >
           {isExecuting ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Executing...</span>
+              <span className='font-semibold'>Executing...</span>
             </>
           ) : (
             <>
-              <span>▶️</span>
-              <span>Execute</span>
+              <span className='font-semibold'>Execute</span>
             </>
           )}
         </button>

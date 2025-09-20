@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getExecutionHistory } from "../../api/execution"
+import { getExecutionHistory } from "../../apiServices/execution.api"
 
 export const useExecutionHistory = (workflowId: string) => {
   return useQuery({

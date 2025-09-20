@@ -1,5 +1,16 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { createWorkflow } from "../../apiServices/workflow.api";
 
-const useCreateWorkflow = () => {
-    const queryClient = useQuery({})
-}
+
+
+export const useCreateWorkflow = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: createWorkflow,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["workflows"] })
+        }
+    })
+};
+

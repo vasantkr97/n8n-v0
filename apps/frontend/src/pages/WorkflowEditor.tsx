@@ -18,7 +18,7 @@ import { edgeTypes, createN8nEdge } from "../components/edges/edgeTypes";
 import { NodeSelector } from "../components/NodeSelector";
 import { AddNodeButton } from "../components/AddNodeButton";
 import { WorkflowToolbar } from "../components/WorkflowToolbar";
-import { useWorkflowManagement } from "../hooks/workflowHooks/useWorkflowManagement";
+import { useWorkflowManagement } from "../hooks/executionHooks/useWorkflowManagement";
 
 // Clean canvas - start with completely empty workflow
 const getInitialNodes = (): any[] => {
@@ -54,6 +54,7 @@ export default function WorkflowEditor() {
     const [sourceNodeForConnection, setSourceNodeForConnection] = useState<string | null>(null);
     const [addButtonPosition, setAddButtonPosition] = useState({ x: 0, y: 0 });
     const [showAddButton, setShowAddButton] = useState(false);
+    const [hasAddedFirstNode, setHasAddedFirstNode] = useState(false);
 
     const handleExecutionStart = (executionId: string) => {
         setCurrentExecutionId(executionId)
@@ -316,6 +317,7 @@ export default function WorkflowEditor() {
         setEdges(eds => [...eds, newEdge]);
       }
 
+      setHasAddedFirstNode(true);
       // Close selector
       setShowNodeSelector(false);
       setSourceNodeForConnection(null);
@@ -376,7 +378,7 @@ export default function WorkflowEditor() {
                     minZoom={0.1}
                     maxZoom={4}
                     attributionPosition="bottom-left"
-                    fitView={nodes.length > 0}
+                    // fitView={nodes.length > 0}
                     fitViewOptions={{
                         padding: 0.2,
                         includeHiddenNodes: false,
@@ -399,21 +401,31 @@ export default function WorkflowEditor() {
                         gap={20}
                         size={1}
                         color="#d1d5db"
-                        style={{ backgroundColor: 'linear-gradient(to bottom right, #000000, #434343)' }}
+                        style={{ backgroundColor: '#374151' }}
                     />
                     <Controls 
-                        position="bottom-right"
+                        position="bottom-left"
                         showZoom={true}
                         showFitView={true}
                         showInteractive={false}
+                        style={{  bottom: 20, width: 96, height: 96, fontSize:40 }}
                     />
-                    <MiniMap 
-                        nodeColor="#e5e7eb"
-                        nodeStrokeWidth={3}
-                        position="bottom-left"
+                    <MiniMap
+                        nodeColor={(node) => {
+                            // color based on node status or type
+                            if ((node.data as any)?.hasError) return '#ff6b6b';
+                            if ((node.data as any)?.isSuccess) return '#51cf66';
+                            if ((node.data as any)?.isExecuting) return '#339af0';
+                            return '#9ca3af'; // default gray
+                        }}
+                        nodeStrokeWidth={2}
+                        position="bottom-right"  // move to bottom-right to avoid overlapping Controls
                         style={{
-                            backgroundColor: '#f9fafb',
-                            border: '1px solid #e5e7eb',
+                            height: 120,            // adjust height
+                            width: 180,             // adjust width
+                            backgroundColor: '#1f2937', // dark gray canvas
+                            border: '1px solid #4b5563', // proper border
+                            borderRadius: '8px',    // optional rounding
                         }}
                         zoomable
                         pannable
@@ -449,12 +461,13 @@ export default function WorkflowEditor() {
                     onNodeSelect={handleNodeSelect}
                     onClose={handleCloseNodeSelector}
                     isVisible={showNodeSelector}
+                    isFirstNode={!hasAddedFirstNode}
                 />
                 
                 {/* Execution Panel Toggle */}
                 <button
                     onClick={() => setShowExecutionPanel(!showExecutionPanel)}
-                    className="absolute top-4 right-4 z-10 px-4 py-2 bg-blue-600 text-white rounded-md shadow-lg hover:bg-blue-700 transition-colors"
+                    className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-blue-600 text-white rounded-md shadow-lg hover:bg-blue-700 transition-colors"
                 >
                     {showExecutionPanel ? "Hide" : "Show"} Execution Panel
                 </button>

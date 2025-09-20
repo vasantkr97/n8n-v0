@@ -49,35 +49,37 @@ export default function Credentials() {
   });
 
   const platforms = [
-    { value: 'googleApi', label: '🌐 Google API', icon: '🔑' },
-    { value: 'stripeApi', label: '💳 Stripe API', icon: '💰' },
-    { value: 'slackApi', label: '💬 Slack API', icon: '📢' },
-    { value: 'httpAuth', label: '🔐 HTTP Authentication', icon: '🔒' },
+    { value: 'googleApi', label: 'Google API' },
+    { value: 'stripeApi', label: 'Stripe API' },
+    { value: 'slackApi', label: 'Slack API' },
+    { value: 'httpAuth', label: 'HTTP Authentication' },
   ];
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-lg text-gray-600">Loading credentials...</div>
+      <div className="flex items-center justify-center h-full bg-gray-700">
+        <div className="text-lg text-gray-300">Loading credentials...</div>
       </div>
     );
   }
 
   return (
-    <div className="h-full p-6 bg-gray-50">
+    <div className="h-full p-6 bg-gray-700 text-white">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Credentials</h1>
-            <p className="text-gray-600">Manage your API keys and authentication credentials</p>
+            <h1 className="text-2xl font-bold text-white">Credentials</h1>
+            <p className="text-gray-300">
+              Manage your API keys and authentication credentials
+            </p>
           </div>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
-            <span>➕</span>
-            <span>Add Credential</span>
+            
+            <span className='font-semibold'>Add Credential</span>
           </button>
         </div>
 
@@ -85,15 +87,18 @@ export default function Credentials() {
         {credentials && credentials.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {credentials.map((credential: any) => (
-              <div key={credential.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+              <div
+                key={credential.id}
+                className="bg-gray-800 rounded-lg border border-gray-600 p-4 hover:shadow-lg transition-shadow"
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-lg">
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-lg">
                       🔑
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{credential.title}</h3>
-                      <p className="text-sm text-gray-600">{credential.platform}</p>
+                      <h3 className="font-semibold text-white">{credential.title}</h3>
+                      <p className="text-gray-300 text-sm">{credential.platform}</p>
                     </div>
                   </div>
                   <button
@@ -103,20 +108,21 @@ export default function Credentials() {
                     🗑️
                   </button>
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-400">
                   Created: {new Date(credential.createdAt).toLocaleDateString()}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔑</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No credentials yet</h3>
-            <p className="text-gray-600 mb-4">Add your first credential to start connecting to external services</p>
+          <div className="text-center py-12 text-gray-200">
+            <h3 className="text-lg font-semibold mb-2">No credentials yet</h3>
+            <p className="mb-4 text-gray-300">
+              Add your first credential to start connecting to external services
+            </p>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-3 py-1.5 font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Add Your First Credential
             </button>
@@ -125,34 +131,34 @@ export default function Credentials() {
 
         {/* Create Credential Modal */}
         {showCreateForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 text-white">
               <h2 className="text-xl font-semibold mb-4">Add New Credential</h2>
-              
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Credential Name
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Credential Name</label>
                   <input
                     type="text"
                     value={newCredential.title}
-                    onChange={(e) => setNewCredential(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setNewCredential((prev) => ({ ...prev, title: e.target.value }))
+                    }
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     placeholder="My API Credential"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Platform
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Platform</label>
                   <select
                     value={newCredential.platform}
-                    onChange={(e) => setNewCredential(prev => ({ ...prev, platform: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) =>
+                      setNewCredential((prev) => ({ ...prev, platform: e.target.value }))
+                    }
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   >
-                    {platforms.map(platform => (
+                    {platforms.map((platform) => (
                       <option key={platform.value} value={platform.value}>
                         {platform.label}
                       </option>
@@ -161,12 +167,10 @@ export default function Credentials() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    API Key / Token
-                  </label>
+                  <label className="block text-sm font-medium mb-1">API Key / Token</label>
                   <input
                     type="password"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                     placeholder="Enter your API key"
                   />
                 </div>
@@ -175,7 +179,7 @@ export default function Credentials() {
               <div className="flex space-x-3 mt-6">
                 <button
                   onClick={() => setShowCreateForm(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   Cancel
                 </button>
