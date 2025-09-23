@@ -1,22 +1,15 @@
+import AgentNode from './AgentNode';
 import N8nNode from './N8nNode';
 
 // Define all custom node types for n8n-style workflow
 export const nodeTypes = {
   'n8n-node': N8nNode,
-  // You can add more specific node types here
-  'trigger': N8nNode,
-  'action': N8nNode,
-  'webhook': N8nNode,
-  'http': N8nNode,
-  'email': N8nNode,
-  'manual': N8nNode,
-  'cron': N8nNode,
-  'gmail': N8nNode,
-  'slack': N8nNode,
-  'function': N8nNode,
-  'condition': N8nNode,
-  'merge': N8nNode,
-  'switch': N8nNode,
+  manual: N8nNode,
+  webhook: N8nNode,
+  email: N8nNode,
+  telegram: N8nNode,
+  gemini: N8nNode, // Use AgentNode for gemini nodes
+  // Add trigger flags to node configs for proper rendering
 };
 
 // Helper function to create n8n-style node data
@@ -35,93 +28,54 @@ export const createN8nNode = (
   }
 ) => ({
   id,
-  type: 'n8n-node',
+  type: type, // Use the actual node type for proper component mapping
   position,
   data: {
     ...data,
-    type, // Store the actual node type in data
+    type, // store actual node type here as well
   },
 });
 
-// Predefined node configurations for common n8n node types
+// Predefined node configurations for our nodes
 export const nodeConfigs = {
+  // === Triggers ===
   manual: {
     icon: '▶️',
     color: '#007acc',
     label: 'Manual Trigger',
-    description: 'Manually trigger workflow',
-    isTrigger: true
+    description: 'Manually start the workflow',
+    isTrigger: true,
   },
   webhook: {
     icon: '🔗',
     color: '#28a745',
     label: 'Webhook',
-    description: 'Listen for HTTP requests',
-    isTrigger: true
+    description: 'Trigger on incoming HTTP requests',
+    isTrigger: true,
   },
-  http: {
-    icon: '🌐',
-    color: '#6f42c1',
-    label: 'HTTP Request',
-    description: 'Make HTTP requests',
-    isTrigger: false
-  },
+
+  // === Actions ===
   email: {
     icon: '📧',
     color: '#dc3545',
     label: 'Email',
     description: 'Send email messages',
-    isTrigger: false
+    isTrigger: false,
   },
-  cron: {
-    icon: '⏰',
-    color: '#fd7e14',
-    label: 'Cron',
-    description: 'Schedule based trigger',
-    isTrigger: true
-  },
-  gmail: {
-    icon: '📮',
-    color: '#ea4335',
-    label: 'Gmail',
-    description: 'Gmail integration',
-    isTrigger: false
-  },
-  slack: {
+  telegram: {
     icon: '💬',
-    color: '#4a154b',
-    label: 'Slack',
-    description: 'Slack integration',
-    isTrigger: false
+    color: '#0088cc',
+    label: 'Telegram',
+    description: 'Send messages via Telegram bot',
+    isTrigger: false,
   },
-  function: {
-    icon: '⚙️',
-    color: '#6c757d',
-    label: 'Function',
-    description: 'JavaScript function',
-    isTrigger: false
+  gemini: {
+    icon: '✨',
+    color: '#6f42c1',
+    label: 'Gemini Agent',
+    description: 'Use Gemini LLM to generate responses',
+    isTrigger: false,
   },
-  condition: {
-    icon: '❓',
-    color: '#17a2b8',
-    label: 'IF',
-    description: 'Conditional logic',
-    isTrigger: false
-  },
-  merge: {
-    icon: '🔀',
-    color: '#20c997',
-    label: 'Merge',
-    description: 'Merge data streams',
-    isTrigger: false
-  },
-  switch: {
-    icon: '🔁',
-    color: '#ffc107',
-    label: 'Switch',
-    description: 'Route data conditionally',
-    isTrigger: false
-  }
 };
 
 // Helper to get node config by type
@@ -130,6 +84,7 @@ export const getNodeConfig = (type: string) => {
     icon: '⚙️',
     color: '#6c757d',
     label: type,
-    description: `${type} node`
+    description: `${type} node`,
+    isTrigger: false,
   };
 };

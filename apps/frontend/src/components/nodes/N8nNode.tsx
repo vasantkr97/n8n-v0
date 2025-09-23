@@ -18,7 +18,6 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
     if (data?.isExecuting) return '⏳';
     return (data as any)?.icon || '⚙️'; // Default gear icon
   };
-  console.log("Node type:", data);
   const isTrigger = Boolean((data as any)?.isTrigger);
 
   return (
@@ -26,8 +25,8 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
       {/* Square Node Container */}
       <div
         className={`relative bg-gray-800 rounded-lg w-32 h-28 border-2 transition-all duration-300 flex items-center justify-center ${
-          selected 
-            ? 'border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-105' 
+          selected
+            ? 'border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-105'
             : 'border-gray-600 shadow-[0_4px_12px_rgba(0,0,0,0.4)]'
         } hover:border-gray-400 hover:shadow-[0_6px_16px_rgba(0,0,0,0.6)] hover:scale-102`}
       >
@@ -36,7 +35,7 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
           <Handle
             type="target"
             position={Position.Left}
-            className="absolute top-1/2 -translate-y-1/2 -left-2 
+            className="absolute top-1/2 -translate-y-1/2 -left-2
                        bg-gray-700 border-2 border-gray-500 w-3 h-3 rounded-full
                        hover:scale-125 hover:border-blue-400 transition-all duration-200 hover:bg-gray-600"
           />
@@ -46,8 +45,8 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
         <Handle
           type="source"
           position={Position.Right}
-          className="absolute top-1/2 -translate-y-1/2 -right-2 
-                     bg-gray-700 border-2 border-gray-500 w-2 h-2 
+          className="absolute top-1/2 -translate-y-1/2 -right-2
+                     bg-gray-700 border-2 border-gray-500 w-2 h-2
                      hover:scale-125 hover:border-blue-400 transition-all duration-200 hover:bg-gray-600"
         />
 
@@ -72,17 +71,10 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
         <div className="text-xs font-medium text-gray-200 leading-tight truncate">
           {(data as any)?.label}
         </div>
-        <div className="text-[10px] text-gray-400 capitalize mt-0.5 truncate">
-          {(data as any)?.type}
-        </div>
+        
         {(data as any)?.isExecuting && (
           <div className="text-[9px] text-blue-400 mt-0.5 font-medium animate-pulse">
             Executing...
-          </div>
-        )}
-        {(data as any)?.description && !((data as any)?.isExecuting) && (
-          <div className="text-[9px] text-gray-500 mt-0.5 leading-tight truncate max-w-full">
-            {(data as any)?.description}
           </div>
         )}
       </div>

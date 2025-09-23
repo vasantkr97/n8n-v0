@@ -1,20 +1,53 @@
 import { useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { 
-  getWorkflows, 
-  createWorkflow, 
+import {
+  getWorkflows,
+  createWorkflow,
   updateWorkflow
 } from '../../apiServices/workflow.api';
 import { executeWorkflow } from '../../apiServices/execution.api';
+
+// Generate UUID for nodes and workflows
+const generateId = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
+// Get n8n-style node type based on our node type
+const getN8nNodeType = (nodeType: string) => {
+  switch (nodeType) {
+    case 'manual':
+      return '@n8n/n8n-manualTrigger';
+    case 'webhook':
+      return '@n8n/n8n-WebhookTrigger';
+    case 'email':
+      return 'n8n-nodes-base.email';
+    case 'telegram':
+      return 'n8n-nodes-base.telegram';
+    case 'gemini':
+      return '@n8n/n8n-nodes-langchain.googleGemini';
+    default:
+      return `n8n-nodes-base.${nodeType}`;
+  }
+};
 
 export interface WorkflowData {
   id?: string;
   title: string;
   isActive: boolean;
-  nodes: any[];
-  edges: any[];
   triggerType: 'MANUAL' | 'WEBHOOK' | 'CRON';
   description?: string;
+  // n8n-style workflow data
+  createdAt?: string;
+  updatedAt?: string;
+  nodes?: any;
+  connections?: any;
+  // Legacy fields for backward compatibility
+  edges?: any[];
+
 }
 
 export const useWorkflowManagement = () => {
@@ -22,10 +55,12 @@ export const useWorkflowManagement = () => {
   const [currentWorkflow, setCurrentWorkflow] = useState<WorkflowData>({
     title: 'My New Workflow',
     isActive: false,
-    nodes: [],
-    edges: [],
     triggerType: 'MANUAL',
-    description: ''
+    description: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    nodes: [],
+    connections: {}
   });
 
   // Get all workflows
@@ -49,8 +84,8 @@ export const useWorkflowManagement = () => {
 
   // Update workflow mutation
   const updateWorkflowMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<WorkflowData> }) => 
-      updateWorkflow({ id, data }),
+    mutationFn: ({ id, data }: { id: string; data: Partial<WorkflowData> }) =>
+      updateWorkflow({ workflowId: id, updatedWorkflow: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workflows'] });
       console.log('Workflow updated successfully');
@@ -74,44 +109,98 @@ export const useWorkflowManagement = () => {
 
   // Create new workflow
   const createNewWorkflow = useCallback(() => {
+    const now = new Date().toISOString();
     setCurrentWorkflow({
       title: 'My New Workflow',
       isActive: true, // Start as active so it can be executed
-      nodes: [],
-      edges: [],
       triggerType: 'MANUAL',
-      description: ''
+      description: '',
+      createdAt: now,
+      updatedAt: now,
+      nodes: [],
+      connections: {},
+   
     });
   }, []);
 
-  // Save current workflow
+  // Save current workflow in n8n format
   const saveWorkflow = useCallback(async () => {
     try {
+      const now = new Date().toISOString();
+
+      // Convert our nodes to n8n format
+      const n8nNodes = currentWorkflow.nodes.map((node: any) => {
+        const nodeType = node.data?.type || 'unknown';
+        const n8nType = getN8nNodeType(nodeType);
+        const nodeData = node.data || {};
+
+        return {
+          parameters: {
+            ...nodeData,
+            options: {}
+          },
+          type: n8nType,
+          typeVersion: 1.0,
+          position: [Math.round(node.position.x), Math.round(node.position.y)],
+          id: node.id,
+          name: nodeData.label || nodeType,
+          webhookId: nodeData.webhookId || generateId()
+        };
+      });
+
+        // Use existing connections or convert from edges if needed
+        const connections = currentWorkflow.connections || {};
+
+      // Create n8n-style workflow data
       const workflowData = {
+        name: currentWorkflow.title,
+        active: currentWorkflow.isActive,
+        isArchived: false,
+        nodes: n8nNodes,
+        connections,
+        settings: {
+          executionOrder: 'v1'
+        },
+        staticData: null,
+        meta: {
+          templateCredsSetupCompleted: true
+        },
+        pinData: {},
+        versionId: currentWorkflow.id || generateId(),
+        triggerCount: currentWorkflow.nodes?.filter((n: any) => n.data?.isTrigger).length || 0,
+        tags: [],
+        scopes: [
+          'workflow:create',
+          'workflow:delete',
+          'workflow:execute',
+          'workflow:list',
+          'workflow:move',
+          'workflow:read',
+          'workflow:share',
+          'workflow:update'
+        ]
+      };
+
+      const saveData = {
         title: currentWorkflow.title,
         isActive: currentWorkflow.isActive,
         triggerType: currentWorkflow.triggerType,
-        nodes: currentWorkflow.nodes.map(node => ({
-          nodeId: node.id,
-          type: node.data?.type || 'default',
-          position: node.position,
-          parameters: node.data || {},
-          label: node.data?.label || node.data?.type || 'Node',
-          data: node.data || {},
-          style: node.data?.style || {},
-          edges: currentWorkflow.edges.filter(edge => edge.source === node.id || edge.target === node.id)
-        }))
+        description: currentWorkflow.description,
+        createdAt: now,
+        updatedAt: now,
+        ...workflowData
       };
 
       if (currentWorkflow.id) {
         // Update existing workflow
         await updateWorkflowMutation.mutateAsync({
           id: currentWorkflow.id,
-          data: workflowData
+          data: saveData
         });
       } else {
         // Create new workflow
-        await createWorkflowMutation.mutateAsync(workflowData);
+        const result = await createWorkflowMutation.mutateAsync(saveData);
+        setCurrentWorkflow(prev => ({ ...prev, id: result.id, createdAt: now, updatedAt: now }));
       }
     } catch (error) {
       console.error('Save workflow failed:', error);
@@ -124,25 +213,92 @@ export const useWorkflowManagement = () => {
     if (!currentWorkflow.id) {
       console.log('Workflow not saved yet, saving before execution...');
       try {
-        // Save the workflow first
+        const now = new Date().toISOString();
+
+        // Convert nodes to n8n format for saving
+        const n8nNodes = currentWorkflow.nodes.map((node: any) => {
+          const nodeType = node.data?.type || 'unknown';
+          const n8nType = getN8nNodeType(nodeType);
+          const nodeData = node.data || {};
+
+          return {
+            parameters: {
+              ...nodeData,
+              options: {}
+            },
+            type: n8nType,
+            typeVersion: 1.0,
+            position: [Math.round(node.position.x), Math.round(node.position.y)],
+            id: node.id,
+            name: nodeData.label || nodeType,
+            webhookId: nodeData.webhookId || generateId()
+          };
+        });
+
+        // Convert edges to n8n connections format
+        const connections: any = {};
+        currentWorkflow.edges?.forEach((edge: any) => {
+          const sourceNode = currentWorkflow.nodes?.find((n: any) => n.id === edge.source);
+          const targetNode = currentWorkflow.nodes?.find((n: any) => n.id === edge.target);
+
+          if (sourceNode && targetNode) {
+            const sourceName = sourceNode.data?.label || sourceNode.data?.type || 'Node';
+            const targetName = targetNode.data?.label || targetNode.data?.type || 'Node';
+
+            if (!connections[sourceName]) {
+              connections[sourceName] = { main: [[]] };
+            }
+
+            connections[sourceName].main[0].push({
+              node: targetName,
+              type: 'main',
+              index: 0
+            });
+          }
+        });
+
+        // Create n8n-style workflow data for saving
         const workflowData = {
+          name: currentWorkflow.title,
+          active: currentWorkflow.isActive,
+          isArchived: false,
+          nodes: n8nNodes,
+          connections,
+          settings: {
+            executionOrder: 'v1'
+          },
+          staticData: null,
+          meta: {
+            templateCredsSetupCompleted: true
+          },
+          pinData: {},
+          versionId: generateId(),
+          triggerCount: currentWorkflow.nodes?.filter((n: any) => (n as any).data?.isTrigger).length || 0,
+          tags: [],
+          scopes: [
+            'workflow:create',
+            'workflow:delete',
+            'workflow:execute',
+            'workflow:list',
+            'workflow:move',
+            'workflow:read',
+            'workflow:share',
+            'workflow:update'
+          ]
+        };
+
+        const saveData = {
           title: currentWorkflow.title,
           isActive: currentWorkflow.isActive,
           triggerType: currentWorkflow.triggerType,
-          nodes: currentWorkflow.nodes.map(node => ({
-            nodeId: node.id,
-            type: node.data?.type || 'default',
-            position: node.position,
-            parameters: node.data || {},
-            label: node.data?.label || node.data?.type || 'Node',
-            data: node.data || {},
-            style: node.data?.style || {},
-            edges: currentWorkflow.edges.filter(edge => edge.source === node.id || edge.target === node.id)
-          }))
+          description: currentWorkflow.description,
+          createdAt: now,
+          updatedAt: now,
+          ...workflowData
         };
-        
-        const result = await createWorkflowMutation.mutateAsync(workflowData);
-        
+
+        const result = await createWorkflowMutation.mutateAsync(saveData);
+
         // Execute with the new workflow ID
         await executeWorkflowMutation.mutateAsync({
           workflowId: result.id,

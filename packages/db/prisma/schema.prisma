@@ -55,7 +55,7 @@ model Workflow {
 model Execution {
   id                String          @id  @default(cuid())
   status            ExecStatus
-  mode              ExecutionMode        // "manual", " trigger", "webhhok"
+  mode              ExecutionMode        // "manual", "webhhok"
   data              Json                 //All execution data and node outputs
 
   workflowId        String
@@ -74,7 +74,7 @@ model Credentials {
   id               String           @id  @default(cuid())
   title            String
   platform         Platform          //googleApi, stripeApi,"apiKey", "httpHeaderAuth", "customApiKey" etc Credential type Identifier
-  data             Json          //sensitive authentication information
+  data             Json              //sensitive authentication information
 
   userId           String
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)

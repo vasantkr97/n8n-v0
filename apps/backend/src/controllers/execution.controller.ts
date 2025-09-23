@@ -1,5 +1,88 @@
 import { Request, Response } from "express";
 import { prisma } from "@n8n-v0/db";
+import { executeWorkflow } from "../engine/executeWorkflow";
+
+export const manualExecute = async (req: Request, res: Response) => {
+  try {
+      const { workflowId } = req.params;
+      const triggerData = req.body;
+      const userId = req.user!.id; // Get userId from authenticated user
+
+      if (!userId) {
+        return res.status(400).json({ error: "User not authenticated"});
+      }
+
+      const workflow = await prisma.workflow.findFirst({
+          where: {
+              id: workflowId,
+              userId: userId
+          },
+      });
+
+      if (!workflow) {
+          return res.status(404).json({ error: "Workflow not found or access denied"});
+      }
+
+      //checking is workflow is active
+      if (!workflow.isActive) {
+          return res.status(400).json({ error: "Workflow is not active"});
+      }
+
+      const executionId = await executeWorkflow(workflowId, userId, "MANUAL", triggerData)
+
+  
+      res.status(200).json({
+          success: true,
+          data: {
+              executionId: executionId,
+              message: "Workflow execution started"
+          }
+      })
+  } catch (error) {
+      console.error("Error  running workflow:", error);
+      res.status(500).json({ error: "Internal server error"})
+  }
+};
+
+export const getExecutionById = async (req: Request, res: Response) => {
+  try {
+    const executionId = req.body;
+    const userId = req.user!.id;
+
+    if (!userId) {
+      return res.status(400).json({ message: "user id is required"})
+    };
+    
+    const execution = await prisma.execution.findFirst({
+      where: { id:executionId, userId };
+      include: {
+        workflow: {
+          select: {
+            id: true,
+            title: true,
+            triggerType: true
+          }
+        }
+      }
+    })
+
+    if (!execution) {
+      return res.status(400).json({msg: "Execution not Found or Access denied!"})
+    }
+
+    res.status(200).json({
+      success: true,
+      data: execution
+    });
+    
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      msg: "Interval server error while fetching execution By id"
+    })
+  }
+}
 
 // Get execution history for a workflow
 export const getExecutionHistory = async (req: Request, res: Response) => {
@@ -264,74 +347,6 @@ export const getExecutionStats = async (req: Request, res: Response) => {
   }
 };
 
-
-export const ExecuteManually = async (req: Request, res: Response) => {
-  try {
-      const { workflowId } = req.params;
-      const { inputData } = req.body;
-      const userId = req.user!.id; // Get userId from authenticated user
-
-      const workflow = await prisma.workflow.findFirst({
-          where: {
-              id: workflowId,
-              userId: userId
-          },
-      });
-
-      if (!workflow) {
-          return res.status(404).json({ error: "Workflow not found or access denied"});
-      }
-
-      //checking is workflow is active
-      if (!workflow.isActive) {
-          return res.status(400).json({ error: "Workflow is not active"});
-      }
-
-      const execution = await prisma.execution.create({
-          data: {
-              status: "PENDING",
-              mode: "MANUAL",
-              data: {
-                  inputData: inputData || {},
-                  startedAt: new Date(),
-              },
-              workflowId,
-              userId
-          }
-      });
-
-      await prisma.execution.update({
-          where: { id: execution.id },
-          data: {
-              status: "RUNNING",
-              data: {
-                  ...execution.data as any,
-              }
-          }
-      });
-
-      // Simulate execution completion after a delay (in a real app, this would be handled by a workflow engine)
-      setTimeout(async () => {
-          try {
-              await simulateWorkflowExecution(execution.id, workflow);
-          } catch (error) {
-              console.error("Error in workflow simulation:", error);
-          }
-      }, 2000); // Start simulation after 2 seconds
-
-      res.status(200).json({
-          success: true,
-          data: {
-              executionId: execution.id,
-              status: "RUNNING",
-              message: "Workflow execution started"
-          }
-      })
-  } catch (error) {
-      console.error("Error  running workflow:", error);
-      res.status(500).json({ error: "Internal server error"})
-  }
-}
 
 // Simulate workflow execution (in a real app, this would be handled by a proper workflow engine)
 async function simulateWorkflowExecution(executionId: string, workflow: any) {

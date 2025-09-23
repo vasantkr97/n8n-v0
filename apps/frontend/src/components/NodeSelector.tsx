@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getNodeConfig } from './nodes/nodeTypes';
 
 interface NodeSelectorProps {
@@ -6,23 +6,27 @@ interface NodeSelectorProps {
   onNodeSelect: (nodeType: string) => void;
   onClose: () => void;
   isVisible: boolean;
-  isFirstNode: boolean;
+  hasTrigger: boolean;
 }
 
 const nodeCategories = {
-  'Triggers': ['manual', 'webhook', 'cron'],
-  'Actions': ['http', 'email', 'function'],
-  'Logic': ['condition', 'switch', 'merge'],
-  'Apps': ['gmail', 'slack']
+  'Triggers': ['manual', 'webhook'],
+  'Actions': ['telegram', 'email', 'gemini'],
 };
 
-export const NodeSelector = ({ position, onNodeSelect, onClose, isVisible, isFirstNode }: NodeSelectorProps) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Triggers');
+export const NodeSelector = ({ position, onNodeSelect, onClose, isVisible, hasTrigger }: NodeSelectorProps) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>(hasTrigger ? 'Actions' : 'Triggers');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Update selected category when hasTrigger changes
+  useEffect(() => {
+    setSelectedCategory(hasTrigger ? 'Actions' : 'Triggers');
+  }, [hasTrigger]);
 
   if (!isVisible) return null;
 
-  const availableCategories = isFirstNode ? { Triggers: nodeCategories.Triggers } : nodeCategories;
+  const availableCategories = hasTrigger ? { Actions: nodeCategories.Actions } : nodeCategories;
+
 
   const filteredNodes = searchTerm 
     ? Object.values(availableCategories).flat().filter(nodeType => 

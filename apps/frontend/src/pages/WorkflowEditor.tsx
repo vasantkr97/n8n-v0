@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { 
   ReactFlow, 
   Controls, 
@@ -17,8 +17,18 @@ import { nodeTypes, createN8nNode, getNodeConfig } from "../components/nodes/nod
 import { edgeTypes, createN8nEdge } from "../components/edges/edgeTypes";
 import { NodeSelector } from "../components/NodeSelector";
 import { AddNodeButton } from "../components/AddNodeButton";
-import { WorkflowToolbar } from "../components/WorkflowToolbar";
+import WorkflowToolbar from "../components/WorkflowToolbar";
+import { NodeParametersPanel } from "../components/parameters/NodeParametersPanel";
 import { useWorkflowManagement } from "../hooks/executionHooks/useWorkflowManagement";
+
+// Helper function to generate UUID
+const generateId = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 // Clean canvas - start with completely empty workflow
 const getInitialNodes = (): any[] => {
@@ -47,6 +57,29 @@ export default function WorkflowEditor() {
     // React Flow state management - start with clean canvas
     const [nodes, setNodes, onNodesChange] = useNodesState(getInitialNodes());
     const [edges, setEdges, onEdgesChange] = useEdgesState(getInitialEdges());
+
+    // Sync with workflow management state
+    useEffect(() => {
+      if (currentWorkflow.nodes && currentWorkflow.nodes.length > 0) {
+        setNodes(currentWorkflow.nodes);
+      }
+      if (currentWorkflow.connections) {
+        // Convert connections back to edges for React Flow
+        const convertedEdges = Object.entries(currentWorkflow.connections).flatMap(([sourceName, connectionData]) => {
+          if (connectionData.main && connectionData.main[0]) {
+            return connectionData.main[0].map((conn: any) => ({
+              id: `${sourceName}-${conn.node}`,
+              source: sourceName,
+              target: conn.node,
+              type: 'default',
+              data: { itemCount: 1 }
+            }));
+          }
+          return [];
+        });
+        setEdges(convertedEdges);
+      }
+    }, [currentWorkflow.nodes, currentWorkflow.connections, setNodes, setEdges]);
     
     // Node addition state
     const [showNodeSelector, setShowNodeSelector] = useState(false);
@@ -55,6 +88,11 @@ export default function WorkflowEditor() {
     const [addButtonPosition, setAddButtonPosition] = useState({ x: 0, y: 0 });
     const [showAddButton, setShowAddButton] = useState(false);
     const [hasAddedFirstNode, setHasAddedFirstNode] = useState(false);
+    const [hasTrigger, setHasTrigger] = useState(false);
+
+    // Node selection and parameters
+    const [selectedNode, setSelectedNode] = useState<any | null>(null);
+    const [showParametersPanel, setShowParametersPanel] = useState(false);
 
     const handleExecutionStart = (executionId: string) => {
         setCurrentExecutionId(executionId)
@@ -75,22 +113,43 @@ export default function WorkflowEditor() {
     }, [currentWorkflow.isActive, updateWorkflowData]);
 
     // Handle new workflow creation
-    const handleNewWorkflow = useCallback(() => {
-        createNewWorkflow();
-        setNodes(getInitialNodes());
-        setEdges(getInitialEdges());
-        setShowExecutionPanel(false);
-    }, [createNewWorkflow, setNodes, setEdges]);
+  const handleNewWorkflow = useCallback(() => {
+    createNewWorkflow();
+    setShowExecutionPanel(false);
+  }, [createNewWorkflow]);
 
-    // Handle workflow save
-    const handleSaveWorkflow = useCallback(() => {
-        // Update workflow with current nodes and edges
-        updateWorkflowData({
-            nodes: nodes,
-            edges: edges
+  // Handle workflow save
+  const handleSaveWorkflow = useCallback(() => {
+    // Convert edges to connections format
+    const connections: any = {};
+    edges.forEach(edge => {
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      const targetNode = nodes.find(n => n.id === edge.target);
+
+      if (sourceNode && targetNode) {
+        const sourceName = sourceNode.data?.label || sourceNode.data?.type || 'Node';
+        const targetName = targetNode.data?.label || targetNode.data?.type || 'Node';
+
+        if (!connections[sourceName]) {
+          connections[sourceName] = { main: [[]] };
+        }
+
+        connections[sourceName].main[0].push({
+          node: targetName,
+          type: 'main',
+          index: 0
         });
-        saveWorkflow();
-    }, [nodes, edges, updateWorkflowData, saveWorkflow]);
+      }
+    });
+
+    // Update workflow with current nodes and connections
+    updateWorkflowData({
+      nodes: nodes,
+      connections: connections,
+      updatedAt: new Date().toISOString()
+    });
+    saveWorkflow();
+  }, [nodes, edges, updateWorkflowData, saveWorkflow]);
 
     // Handle workflow execution
     const handleExecuteWorkflow = useCallback(async () => {
@@ -268,8 +327,8 @@ export default function WorkflowEditor() {
 
     // Handle node selection from selector
     const handleNodeSelect = useCallback((nodeType: string) => {
-      // Create new node ID
-      const newNodeId = `${nodeType}-${Date.now()}`;
+      // Create new node ID using UUID
+      const newNodeId = generateId();
       
       let newPosition;
       let newEdge = null;
@@ -318,10 +377,16 @@ export default function WorkflowEditor() {
       }
 
       setHasAddedFirstNode(true);
+
+      // Set trigger flag if this is a trigger node
+      if (getNodeConfig(nodeType).isTrigger) {
+        setHasTrigger(true);
+      }
+
       // Close selector
       setShowNodeSelector(false);
       setSourceNodeForConnection(null);
-    }, [sourceNodeForConnection, nodes, nodeSelectorPosition, setNodes, setEdges]);
+    }, [sourceNodeForConnection, nodes, nodeSelectorPosition, setNodes, setEdges, getNodeConfig, setHasTrigger]);
 
     // Close node selector
     const handleCloseNodeSelector = useCallback(() => {
@@ -329,24 +394,45 @@ export default function WorkflowEditor() {
       setSourceNodeForConnection(null);
     }, []);
 
-    // Handle canvas click - close add button or show node selector for first node
+    // Handle canvas click - close add button or show node selector
     const onPaneClick = useCallback((event: React.MouseEvent) => {
       setShowAddButton(false);
       setShowNodeSelector(false);
-      
-      // If no nodes exist, show node selector at click position
-      if (nodes.length === 0) {
-        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        
-        setNodeSelectorPosition({ x, y });
-        setShowNodeSelector(true);
-        setSourceNodeForConnection(null); // No source for first node
-      }
-    }, [nodes.length]);
 
-    return (
+      // Show node selector at click position (works for empty canvas or adding nodes)
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      setNodeSelectorPosition({ x, y });
+      setShowNodeSelector(true);
+      setSourceNodeForConnection(null); // No source node for canvas click
+    }, []);
+
+    // Handle node click - open parameters panel
+    const handleNodeClick = useCallback((event: React.MouseEvent, node: any) => {
+      event.stopPropagation();
+      setSelectedNode(node);
+      setShowParametersPanel(true);
+    }, []);
+
+  // Handle closing parameters panel
+  const handleCloseParametersPanel = useCallback(() => {
+    setShowParametersPanel(false);
+    setSelectedNode(null);
+  }, []);
+
+  // Update node data from parameters panel
+  const handleUpdateNodeData = useCallback(
+    (nodeId: string, data: any) => {
+      setNodes((nodes) =>
+        nodes.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n))
+      );
+    },
+    [setNodes]
+  );
+
+  return (
         <div className="h-full w-full flex flex-col">
             {/* Workflow Toolbar */}
             <WorkflowToolbar
@@ -370,7 +456,7 @@ export default function WorkflowEditor() {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
-                    onNodeClick={onNodeClick}
+                    onNodeClick={handleNodeClick}
                     onPaneClick={onPaneClick}
                     nodeTypes={nodeTypes as any}
                     edgeTypes={edgeTypes as any}
@@ -461,7 +547,7 @@ export default function WorkflowEditor() {
                     onNodeSelect={handleNodeSelect}
                     onClose={handleCloseNodeSelector}
                     isVisible={showNodeSelector}
-                    isFirstNode={!hasAddedFirstNode}
+                    hasTrigger={hasTrigger}
                 />
                 
                 {/* Execution Panel Toggle */}
@@ -496,6 +582,15 @@ export default function WorkflowEditor() {
                     </div>
                 )}
                 </div>
+
+                {/* Node Parameters Panel */}
+                {showParametersPanel && selectedNode && (
+                    <NodeParametersPanel
+                        node={selectedNode}
+                        onClose={handleCloseParametersPanel}
+                        onSave={handleUpdateNodeData}
+                    />
+                )}
         </div>
     )
 }
