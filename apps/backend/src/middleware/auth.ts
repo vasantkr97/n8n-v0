@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt  from "jsonwebtoken"
 import "dotenv/config";
-import { prisma } from "@n8n-v0/db";
+import { prisma } from "@n8n/db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "vasanth";
 

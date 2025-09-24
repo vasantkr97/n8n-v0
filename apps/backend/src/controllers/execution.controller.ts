@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "@n8n-v0/db";
+import { prisma } from "@n8n/db";
 import { executeWorkflow } from "../engine/executeWorkflow";
 
 export const manualExecute = async (req: Request, res: Response) => {
@@ -54,7 +54,7 @@ export const getExecutionById = async (req: Request, res: Response) => {
     };
     
     const execution = await prisma.execution.findFirst({
-      where: { id:executionId, userId };
+      where: { id:executionId, userId },
       include: {
         workflow: {
           select: {
@@ -82,38 +82,49 @@ export const getExecutionById = async (req: Request, res: Response) => {
       msg: "Interval server error while fetching execution By id"
     })
   }
-}
+};
 
-// Get execution history for a workflow
-export const getExecutionHistory = async (req: Request, res: Response) => {
+// Get all executions for user
+export const getAllExecutions = async (req: Request, res: Response) => {
   try {
-    const { workflowId } = req.params;
-    const { page = 1, limit = 10 } = req.query;
+    const userId = req.user!.id;
+    const { page = 1, limit = 20, status, workflowId, mode } = req.query;
+
+    const where: any = {
+      userId
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (workflowId) {
+      where.workflowId = workflowId;
+    };
+
+    if (workflowId) {
+      where.mode = mode;
+    }
 
     const executions = await prisma.execution.findMany({
-      where: {
-        workflowId: workflowId,
-        userId: req.user!.id
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: parseInt(limit as string),
-      skip: (parseInt(page as string) - 1) * parseInt(limit as string),
+      where,
       include: {
         workflow: {
           select: {
-            title: true
+            id: true,
+            title: true,
+            triggerType: true
           }
         }
-      }
-    });
+      ,
+    },
+    orderBy: { createdAt: "desc"},
+    skip: (Number(page) - 1) * Number(limit),
+    take: Number(limit),
+  });
 
     const total = await prisma.execution.count({
-      where: {
-        workflowId: workflowId,
-        userId: req.user!.id
-      }
+      where
     });
 
     res.json({
@@ -126,10 +137,71 @@ export const getExecutionHistory = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Get execution history error:", error);
-    res.status(500).json({ error: "Failed to fetch execution history" });
+    console.error("Get all executions error:", error);
+    res.status(500).json({ error: "Failed to fetch executions" });
   }
 };
+
+export const getWorkFlowExecution = async (req: Request, res: Response) => {
+  try {
+    const { workflowId } = req.params;
+    const { page = 1, limit = 10, status } = req.query;
+    const userId = req.user!.id;
+
+    if (!userId) {
+      return res.status(404).json({ msg: "User not Authenticated"})
+    }
+    //checking if workflow belong to user
+    const workflow = await prisma.execution.findFirst({
+      where: {
+        id: workflowId,
+        userId
+      }
+    })
+
+    if(!workflow) {
+      return res.status(500).json({ msg: "workflow not found or access denied"})
+    };
+
+    const whereClause: any = {
+      workflowId,
+      userId
+    };
+
+    if (!status) {
+      whereClause.status = status;
+    }
+
+    const executions = await prisma.execution.findMany({
+      where: whereClause,
+      orderBy: {
+        createdAt: "desc"
+      },
+      skip: (Number(page)-1)*Number(limit);
+      take: Number(limit)
+    });
+
+    const totalCount = await prisma.execution.count({
+      where: whereClause,
+    })
+
+    return res.status(200).json({
+      success: true,
+      data: executions,
+      count: executions.length,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total:totalCount,
+        totalPages: Math.ceil(totalCount/Number(page));
+      }
+    })
+
+  } catch (error: any) {
+    console.error("Error while fetching the Workflow Executions", error);
+    return res.status(500).json({ error: "Internal Server Error while fetching the workflow executions"})
+  }
+}
 
 // Get execution status
 export const getExecutionStatus = async (req: Request, res: Response) => {
@@ -207,61 +279,30 @@ export const cancelExecution = async (req: Request, res: Response) => {
   }
 };
 
-// Get all executions for user
-export const getAllExecutions = async (req: Request, res: Response) => {
+export const deleteExecution = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 20, status, workflowId } = req.query;
+    const { executionId } = req.params;
+    const userId = req.user!.id;
 
-    const where: any = {
-      userId: req.user!.id
+    if (!userId) {
+      return res.status(400).json({ msg: "User not Authenticated"});
     };
 
-    if (status) {
-      where.status = status;
-    }
-
-    if (workflowId) {
-      where.workflowId = workflowId;
-    }
-
-    const executions = await prisma.execution.findMany({
-      where,
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: parseInt(limit as string),
-      skip: (parseInt(page as string) - 1) * parseInt(limit as string),
-      include: {
-        workflow: {
-          select: {
-            title: true,
-            triggerType: true
-          }
-        }
+    //Checking if execution  exists and belong to user
+    const exists = await prisma.execution.delete({
+      where: {
+        id: executionId,
+        userId
       }
-    });
+    })
 
-    const total = await prisma.execution.count({
-      where
-    });
-
-    res.json({
-      executions,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        pages: Math.ceil(total / parseInt(limit as string))
-      }
-    });
-  } catch (error) {
-    console.error("Get all executions error:", error);
-    res.status(500).json({ error: "Failed to fetch executions" });
+  } catch (error: any) {
+    return 
   }
-};
+}
 
 // Delete execution
-export const deleteExecution = async (req: Request, res: Response) => {
+export const dedleteExecution = async (req: Request, res: Response) => {
   try {
     const { executionId } = req.params;
 
