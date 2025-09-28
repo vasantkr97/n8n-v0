@@ -19,7 +19,6 @@ export interface ExecutionContext {
     executionId: string,
     workflowId: string,
     userId: string,
-    mode: "MANUAL" | "WEBHOOK" | "CRON";
-    data: Record<string, any>
+    mode: "MANUAL" | "WEBHOOK",
     nodeResults: Record<string, any>
 }

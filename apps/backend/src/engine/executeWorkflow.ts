@@ -8,8 +8,7 @@ import { executeGeminiAction } from "./nodeExecutors/geminiExecutor";
 export async function executeWorkflow(
     workflowId: string,
     userId: string,
-    mode: "MANUAL" | "WEBHOOK" | "CRON",
-    triggerData: any | {}
+    mode: "MANUAL",
 ): Promise<string> {
 
 
@@ -19,12 +18,11 @@ export async function executeWorkflow(
             userId,
             mode: mode as any,
             status: "PENDING",
-            data: triggerData,
             startedAt: new Date()
         }
     })
 
-    executeInBackground(execution.id, workflowId, userId, mode, triggerData);
+    executeInBackground(execution.id, workflowId, userId, mode);
 
     return execution.id
 };
@@ -34,8 +32,6 @@ async function executeInBackground(
     executionId: string,
     workflowId: string,
     userId: string,
-    mode: string,
-    triggerData: any
 ) {
 
     try {
@@ -60,13 +56,12 @@ async function executeInBackground(
             workflowId,
             executionId,
             userId,
-            mode: mode as any,
-            data: triggerData,
+            mode: "MANUAL",
             nodeResults: {}
-        };
+        }
+        
+        const triggerNode =  nodes.find(node => node.type === "Trigger")
 
-        //finding trigger node
-        const triggerNode =  nodes.find(node => node.type === "Trigger");
         if (!triggerNode) {
             throw new Error("node trigger node found");
         }

@@ -5,10 +5,14 @@ export const createWorkflow = async (req: Request, res: Response) => {
     try {
         const { title, isActive, triggerType, nodes, connections } = req.body;
 
-        const userId = req.user!.id
+        const userId = req.user?.id
         if (!userId) {
             return res.status(400).json({ msg: "User not authenticated"})
         };
+
+        if (!title || !triggerType) {
+            return res.status(400).json({ msg: "title and tirggerType are required"})
+        }
      
 
         const workflow = await prisma.workflow.create({
@@ -34,7 +38,7 @@ export const createWorkflow = async (req: Request, res: Response) => {
 
 export const getallWorkflows = async (req: Request, res: Response) => {
     try {
-        const { userId } = req.query;
+        const userId = req.user?.id;
 
         if (!userId) {
             return res.status(400).json({ error: "userId is requried"});
@@ -69,11 +73,15 @@ export const getallWorkflows = async (req: Request, res: Response) => {
 export const getWorkflowById = async (req: Request, res: Response) => {
     try {
         const { workflowId } = req.params;
-        const userId = (req as any).user?.id;
+        const userId = req.user?.id;
 
         if (!userId) {
             return res.status(400).json({ error: "UserId  is required"})
         };
+
+        if (!workflowId) {
+            return res.status(400).json({ error: "Workflow ID is required" });
+        }
 
         const workflow = await prisma.workflow.findUnique({
             where: {
@@ -117,6 +125,10 @@ export const updateWorkflow = async (req: Request, res: Response) => {
 
         if (!userId) {
             return res.status(500).json({ msg: "user not found"})
+        };
+
+        if (!workflowId) {
+            return res.status(400).json({ msg: "WorkflowId is requried"})
         }
 
         const { title, isActive, nodes, triggerType, connections } = req.body;
@@ -159,11 +171,15 @@ export const deleteWorkflow = async (req: Request, res: Response) => {
     console.log("request from client")
     try {
         const { workflowId } = req.params;
-        const userId  = (req as any).user?.id;
+        const userId  = req.user?.id;
 
         if (!userId) {
             return res.status(400).json({ error: "userId is required"});
         };
+
+        if (!workflowId) {
+            return res.status(400).json({ error: "Workflow ID is required" });
+        }
 
         const workflow = await prisma.workflow.findFirst({
             where: {

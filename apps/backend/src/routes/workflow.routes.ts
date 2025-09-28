@@ -1,21 +1,21 @@
 import express, { Response, Request } from "express";
 import { createWorkflow, deleteWorkflow, getallWorkflows, getWorkflowById, updateWorkflow } from "../controllers/workflow.controller";
-import { ExecuteManually } from "../controllers/execution.controller";
+import {  manualExecute } from "../controllers/execution.controller";
 import { auth } from "../middleware/auth";
 const router = express.Router();
 
+router.use(auth)
 
+router.post("/createWorkflow", createWorkflow);
 
-router.post("/createWorkflow", auth, createWorkflow);
+router.get("/getallWorkflows", getallWorkflows);
 
-router.get("/getallWorkflows", auth, getallWorkflows);
+router.get("/getWorkflowById/:workflowId", getWorkflowById);
 
-router.get("/getWorkflowById/:workflowId", auth, getWorkflowById);
+router.post("/manual/run/:workflowId", manualExecute);
 
-router.post("/manual/run/:workflowId", auth, ExecuteManually);
+router.put("/updateWorkflow/:workflowId", updateWorkflow);
 
-router.put("/updateWorkflow/:workflowId", auth, updateWorkflow);
-
-router.delete("/deleteWorkflow/:workflowId", auth, deleteWorkflow);
+router.delete("/deleteWorkflow/:workflowId", deleteWorkflow);
 
 export default router;

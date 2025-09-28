@@ -1,33 +1,30 @@
 import express from "express";
 import { auth } from "../middleware/auth";
-import {
-  getExecutionHistory,
-  getExecutionStatus,
-  cancelExecution,
-  getAllExecutions,
-  deleteExecution,
-  getExecutionStats
-} from "../controllers/execution.controller";
+import { deleteExecution, getAllExecutions, getExecutionById, getExecutionStatus, getWorkFlowExecution, manualExecute, stopExecution } from "../controllers/execution.controller";
+import { getWorkflowById } from "../controllers/workflow.controller";
+
 
 const router = express.Router();
 
 // Apply authentication middleware to all routes
 router.use(auth);
 
-// Get execution statistics
-router.get("/stats", getExecutionStats);
+//execute workflow manually
+router.post("/workflow/:workflowId/execute", manualExecute);
 
-// Get all executions for user (with filtering)
-router.get("/", getAllExecutions);
+// get all executions for authenticated user with filtering and pagination
+router.get("/list", getAllExecutions);
 
 // Get execution history for a specific workflow
-router.get("/workflow/:workflowId", getExecutionHistory);
+router.get("/workflow/:workflowId/history", getWorkFlowExecution);
 
-// Get specific execution status
-router.get("/:executionId", getExecutionStatus);
+// Get detailed information for specific execution by Id
+router.get("/:executionId/details", getExecutionById);
 
-// Cancel execution
-router.post("/cancel/:executionId", cancelExecution);
+router.get("/:executionId/status", getExecutionStatus);
+
+// Cancel/stop a running or pending execution
+router.post("/:executionId/cancel", stopExecution);
 
 // Delete execution
 router.delete("/:executionId", deleteExecution);

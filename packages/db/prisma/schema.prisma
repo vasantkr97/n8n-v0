@@ -114,23 +114,3 @@ enum ExecutionMode {
   WEBHOOK
   CRON
 }
-
-// model ExecutionLog {
-//   id             String   @id @default(cuid())
-//   executionId    String
-//   execution      Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
-//   nodeKey        String
-//   status         ExecutionStatus
-//   message        String?
-//   data           Json?
-//   timestamp      DateTime @default(now())
-// };
-
-
-// enum ExecutionStatus {
-//   PENDING
-//   RUNNING
-//   SUCCESS
-//   FAILED
-//   CANCELLED
-// }
