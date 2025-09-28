@@ -1,16 +1,18 @@
 import  express, { type Request, Response } from "express";
-import { postCredentials, getCredentials, updateCredentials, deleteCredentials } from "../controllers/credentials.controller";
+import { postCredentials, getCredentials, updateCredentials, deleteCredentials, getCredentialById } from "../controllers/credentials.controller";
 import { auth } from "../middleware/auth";
 
 const router = express.Router()
 
 router.use(auth);
 
-router.post("/postCred", postCredentials);
+router.post("/postCredentials", postCredentials);
 
-router.get("/getCred", getCredentials);
+router.get("/getCredentials", getCredentials);
 
-router.put("/updateCred/:CredId", updateCredentials);
+router.get("/getCredentiaslById/:id", getCredentialById);
+
+router.put("/updateCred/:id", updateCredentials);
 
 router.delete("/deleteCred/:id", deleteCredentials);
 

@@ -1,4 +1,5 @@
 import { ExecutionContext, WorkflowNode } from "../../types/executionTypes";
+import replaceVariable from "../replaceVariable";
 
 
 export async function executeGeminiAction (
@@ -50,7 +51,7 @@ export async function executeGeminiAction (
         const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
         return {
-            succcess: true,
+            success: true,
             data: {
                 text: generatedText,
                 model: model,

@@ -28,7 +28,7 @@ export const manualExecute = async (req: Request, res: Response) => {
           return res.status(400).json({ error: "Workflow is not active"});
       }
 
-      const executionId = await executeWorkflow(workflowId, userId, "MANUAL", triggerData)
+      const executionId = await executeWorkflow(workflowId, userId, "MANUAL")
 
   
       res.status(200).json({

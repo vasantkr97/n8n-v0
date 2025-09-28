@@ -22,7 +22,7 @@ export async function executeWorkflow(
         }
     })
 
-    executeInBackground(execution.id, workflowId, userId, mode);
+    executeInBackground(execution.id, workflowId, userId);
 
     return execution.id
 };
@@ -57,13 +57,14 @@ async function executeInBackground(
             executionId,
             userId,
             mode: "MANUAL",
+            data: {},
             nodeResults: {}
         }
-        
+
         const triggerNode =  nodes.find(node => node.type === "Trigger")
 
         if (!triggerNode) {
-            throw new Error("node trigger node found");
+            throw new Error("no trigger node found");
         }
 
         //Execute trigger node starting from trigger node
@@ -97,11 +98,16 @@ async function executeNodeChain(
     connections: WorkflowConnection,
     context: ExecutionContext,
 ): Promise<any> {
-
     //execute Current Node
-
-    const nodeResult = executeNode(currentNode, context)
+    const nodeResult = await executeNode(currentNode, context)
+    
+    //store the complete node result for future reference
     context.nodeResults[currentNode.name] = nodeResult
+
+    //Update context data with the latest successfull node result for immediate next access
+    if (nodeResult && nodeResult.success && nodeResult.data) {
+        context.data = nodeResult.data;
+    }
 
     //get next node from Connections
     const nodeConnections = connections[currentNode.name]
@@ -123,7 +129,7 @@ async function executeNodeChain(
 
 
 async function executeNode(node: WorkflowNode, context: ExecutionContext): Promise<any> {
-    console.log(`Executing node: ${node.name} (${node}.type)`);
+    console.log(`Executing node: ${node.name} (${node.type})`);
 
     if (node.type === "Trigger") {
         return {

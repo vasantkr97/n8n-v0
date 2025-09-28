@@ -1,4 +1,5 @@
 import { ExecutionContext, WorkflowNode } from "../../types/executionTypes";
+import replaceVariable from "../replaceVariable";
 
 
 export async function executeEmailAction(

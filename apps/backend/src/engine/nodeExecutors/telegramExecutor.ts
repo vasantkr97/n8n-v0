@@ -1,4 +1,5 @@
 import { ExecutionContext, WorkflowNode } from "../../types/executionTypes";
+import replaceVariable from "../replaceVariable";
 
 
 export async function executeTelegramAction(
@@ -18,7 +19,7 @@ export async function executeTelegramAction(
             throw new Error("ChatId and message are required for Telegram action");
         };
 
-        const processedMessage = replaceVariables(message, context);
+        const processedMessage = replaceVariable(message, context);
 
         const response = await fetch(`https:api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',

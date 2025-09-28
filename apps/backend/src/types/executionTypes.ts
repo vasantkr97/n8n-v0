@@ -19,6 +19,7 @@ export interface ExecutionContext {
     executionId: string,
     workflowId: string,
     userId: string,
-    mode: "MANUAL" | "WEBHOOK",
+    mode: "MANUAL" | "WEBHOOK";
+    data: Record<string, any>
     nodeResults: Record<string, any>
 }

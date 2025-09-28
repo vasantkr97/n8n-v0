@@ -11,28 +11,29 @@ export interface AuthRequest extends Request {
 
 export const postCredentials = async (req: AuthRequest, res:Response) => {
     try {
-        const response = CredentialsSchema.safeParse(req.body);
-
-        if (!response.success) {
-            return res.status(400).json({ msg: "Zod validation Failed"})
-        }
-        const { title, platform, data } = response.data
+    
+        const { title, platform, data } = req.body;
         const userId = req.user?.id
         if (!userId) {
             return res.status(400).json({ msg: "userId required"});
         };
+
+        if (!title || !platform || !data) {
+            return res.status(404).json({ msg: "All credentials fields are required"});
+        }
+
         const credentials = await prisma.credentials.create({
             data: {
                 title: title,
                 platform,
-                data: data,
-                userId: userId
+                data,
+                userId
             }
         });
 
         return res.status(201).json({
             msg:"Credentials created Successfully",
-            credentials: credentials,
+            credentials,
         })
 
     } catch (error) {
@@ -41,6 +42,36 @@ export const postCredentials = async (req: AuthRequest, res:Response) => {
         return res.status(500).json({ msg: "internal Server Error"})
     }
 };
+
+export const getCredentialById = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const  userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(400).json({ msg: "user not authenticated"})
+        }
+
+        if (!id) {
+            return res.status(400).json({ msg: "Credential Id requried"})
+        }
+
+        const credentialById = await prisma.Credential.findFirst({
+            where: {
+                id,
+                userId,
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            credentialById
+        })
+    } catch(error: any) {
+        console.error("error while getting the credentials by if", error.message)
+        return res.status(500).json({"Internal Server Error while getting credential by id."})
+    }
+}
 
 export const getCredentials = async (req: Request, res: Response) => {
     try {
@@ -52,6 +83,13 @@ export const getCredentials = async (req: Request, res: Response) => {
         const credentials = await prisma.credentials.findMany({
             where: {
                 userId,
+            },
+            select: {
+                id: true,
+                title: true,
+                platform: true,
+                createdAt: true,
+                updatedAt: true
             }
         })
         return res.json({ msg: "credentials:", credentials})
@@ -64,21 +102,20 @@ export const getCredentials = async (req: Request, res: Response) => {
 export const updateCredentials = async (req: Request, res: Response) => {
     try {
         const userId = req.user?.id;
-        const { CredId }= req.params;
-        console.log("Params:", req.params);
+        const { id }= req.params;
         const { title, platform, data } = req.body;
 
         if (!userId) {
             return res.status(400).json({ msg: "user not authenticated"});
         }
         
-        if (!CredId) {
+        if (!id) {
             return res.status(400).json({ msg: "Credentials ID is required"});
         }
 
         const exisiting = await prisma.credentials.findFirst({
             where: {
-                id: CredId, 
+                id: id, 
                 userId
             }
         });
@@ -89,7 +126,7 @@ export const updateCredentials = async (req: Request, res: Response) => {
 
         const updated = await prisma.credentials.update({
             where: { 
-                id: CredId
+                id
             },
             data: {
                 title: title ?? exisiting.title,
@@ -117,9 +154,27 @@ export const deleteCredentials = async (req: Request, res: Response) => {
             return res.status(400).json({ msg: "user not authenticated to delete"});
         }
 
-        const credentials = await prisma.credentials.delete({
+        if (!id) {
+            return res.status(400).json({ msg: "Credentials ID is required"});
+        }
+
+        const existing = await prisma.credentials.findFirst({
             where: {
                 id: id,
+                userId
+            }
+        });
+
+        if (!existing) {
+            return res.status(404).json({
+                msg: "Credentials not found or not owned by user"
+            })
+        };
+
+        const credentials = await prisma.credentials.delete({
+            where: {
+                id,
+                userId,
             }
         })
 
