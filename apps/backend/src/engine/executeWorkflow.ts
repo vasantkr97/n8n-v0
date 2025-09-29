@@ -3,6 +3,7 @@ import { ExecutionContext, WorkflowConnection, WorkflowNode } from "../types/exe
 import { executeTelegramAction } from "./nodeExecutors/telegramExecutor";
 import { executeEmailAction } from "./nodeExecutors/emailExecutor";
 import { executeGeminiAction } from "./nodeExecutors/geminiExecutor";
+import { WatchDirectoryFlags } from "typescript";
 
 
 export async function executeWorkflow(
@@ -11,6 +12,26 @@ export async function executeWorkflow(
     mode: "MANUAL",
 ): Promise<string> {
 
+    const workflow = await prisma.workflow.findFirst({
+        where: {
+            id: workflowId,
+        },
+        
+    })
+
+    if (!workflow) {
+        throw new Error("Workflow not found")
+    };
+
+    if (!workflow.isActive) {
+        await prisma.workflow.update({
+            where: { id: workflowId},
+            data: {
+                isActive: true,
+            }
+        })
+    }
+
 
     const execution = await prisma.execution.create({
         data: {
@@ -18,7 +39,8 @@ export async function executeWorkflow(
             userId,
             mode: mode as any,
             status: "PENDING",
-            startedAt: new Date()
+            startedAt: new Date(),
+            data: {}
         }
     })
 
@@ -138,24 +160,37 @@ async function executeNode(node: WorkflowNode, context: ExecutionContext): Promi
             timeStamp: new Date().toISOString()
         }
     }
-    
-    let credentials = null;
+    let credentialId = null;
     if (node.credentials) {
-        const credentialKey = Object.keys(node.credentials)[0];
-        const credentialInfo = node.credentials[credentialKey];
+        //the credentials object contains the credentials ID directly
 
-        credentials = await prisma.credentials.findUnique({
-            where: { id: credentialInfo.id}
-        });
+        if (typeof node.credentials === 'string') {
+            //if credentials is a string, its the ID
+            credentialId = node.credentials;
+        } else if (node.credentials.id) {
+            //if credentials is an object with an id property
+            credentialId = node.credentials.id;
+        } else {
+            //if credentials is an object where the key maps to the ID
+            const credentialKey = Object.keys(node.credentials)[0];
+            const credentialsInfo = node.credentials[credentialKey];
+
+          if (typeof credentialsInfo === "string") {
+            credentialId = credentialsInfo;
+          } else if( credentialsInfo && credentialsInfo.id){
+            credentialId = credentialsInfo.id
+          }
+        }
+        console.log("credentials id:", JSON.stringify(credentialId, null ,2));
     }
 
     //Route tp appropriate executor
-    if (node.name.toLowerCase().includes("telegram")) {
-        return await executeTelegramAction(node, context, credentials);
-    } else if (node.name.toLowerCase().includes('email')) {
-        return await executeEmailAction(node, context, credentials);
-    } else if (node.name.toLowerCase().includes("gemini")) {
-        return await executeGeminiAction(node, context, credentials);
+    if (node.type.toLowerCase().includes("telegram")) {
+        return await executeTelegramAction(node, context, credentialId);
+    } else if (node.type.toLowerCase().includes('email')) {
+        return await executeEmailAction(node, context, credentialId);
+    } else if (node.type.toLowerCase().includes("gemini")) {
+        return await executeGeminiAction(node, context, credentialId);
     };
 
     return {

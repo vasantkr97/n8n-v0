@@ -133,3 +133,117 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
 - [Configuration Options](https://turborepo.com/docs/reference/configuration)
 - [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+{
+    "title": "My workflow example",
+    "isActive": false,
+    "triggerType": "MANUAL",
+    "nodes": [
+        {
+            "parameters": {
+                "options": {}
+            },
+            "type": "Trigger",
+            "position": [-224, 32],
+            "name": "When user triggers workflow"
+        }, 
+        {
+            "parameters": {
+                "chatId": "1349567450",
+                "message": "Hello, workflow trigger successfully"
+            },
+            "type": "telegram",
+            "position": [-16, 32],
+            "name": "Send a text message",
+            "credentials": {
+                "id": "cmg4pu9en00093xzfescq5hk3"
+            }
+        }, 
+        {
+            "parameters": {
+                "prompt": "Generate a few lines about virat greatness",
+                "model": "gemini-pro",
+                "temperature": 0.7
+            },
+            "type": "gemini",
+            "position": [192, 32],
+            "name": "Generate AI content",
+            "credentials": {
+                "id": "cmg4prbot00073xzf1fgjcenh"
+            }
+        },
+        {
+            "parameters": {
+                "from": "npreply@yourdomain.com",
+                "to": "vasanth24ias@gmail.com",
+                "subject": "workflow executions complete",
+                "text": "Workflow Results\n\nYour workflow has completed successfully!\n\nAI Generated Content about Virat:\n{{$node[\"Generate AI content\"].data.text}}\n\nTelegram notification was sent to chat ID: 1349567450\n\nBest regards,\nYour Workflow System",
+                "html": "<h2>Workflow Results</h2><p>Your workflow has completed successfully!</p><p><strong>AI Generated Content about Virat:</strong></p><div style='background:#f5f5f5;padding:15px;border-radius:5px;margin:10px 0;'>{{$node[\"Generate AI content\"].data.text}}</div><p>Telegram notification was sent to chat ID: 1349567450</p><p>Best regards,<br>Your Workflow System</p>"
+            },
+            "type": "email",
+            "position": [400, 32],
+            "name": "Send email notification",
+            "credentials": {
+                "id": "cmg4pkxmh00033xzfh8n0o55o"
+            }
+        }
+    ],
+    "connections": {
+        "When user triggers workflow": {
+            "main": [
+                [
+                    {
+                        "node": "Send a text message",
+                        "type": "main"
+                    }
+                ]
+            ]
+        },
+        "Send a text message": {
+            "main": [
+                [
+                    {
+                        "node": "Generate AI content",
+                        "type": "main"
+                    }
+                ]
+            ]
+        },
+        "Generate AI content": {
+            "main": [
+                [
+                    {
+                        "node": "Send email notification",
+                        "type": "main"
+                    }
+                ]
+            ]
+        }
+    }
+};
+
+
+{
+    "title": "My Email Credentials",
+    "platform": "ResendEmail",
+    "data": {
+        "apiKey": "re_WTxtVBta_BkJoKzPcqjhZTVmQJ936KKsW"
+    }
+};
+
+
+
+{
+    "title": "My Telegram Credentials",
+    "platform": "Telegram",
+    "data": {
+        "botToken": "8078683203:AAEmnooeM88UWQ0lRctiA68Pla53TS878_4"
+    }
+};
+
+{
+    "title": "My Gemini Credentials",
+    "platform": "Gemini",
+    "data": {
+        "apiKey": "AIzaSyDpDGmsFvXz0e44HPUk16PvPnCsZCaq-2s"
+    }
+};

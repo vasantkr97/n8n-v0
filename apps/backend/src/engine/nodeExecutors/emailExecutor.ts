@@ -1,3 +1,4 @@
+import { prisma } from "@n8n/db";
 import { ExecutionContext, WorkflowNode } from "../../types/executionTypes";
 import replaceVariable from "../replaceVariable";
 
@@ -5,18 +6,33 @@ import replaceVariable from "../replaceVariable";
 export async function executeEmailAction(
     node: WorkflowNode,
     context: ExecutionContext,
-    credentials: any
+    credentialId: any
 ): Promise<any> {
     try {
-        if (!credentials) {
-            throw new Error("Email credentials not found")
+        console.log("email is called")
+        if (!credentialId) {
+            throw new Error("Email credentialId not found")
         }
+
+        const credentials = await prisma.credentials.findFirst({
+            where: { id: credentialId }
+        })
+
+        if (!credentials || !credentials.data || credentials.data !== 'object') {
+            throw new Error("Email Credntials not Found");
+        };
+
+        const 
 
         const { apikey } = credentials.data;
         const { from, to, subject, html, text } = node.parameters;
 
-        if (!from || !to || !subject || !html || !text) {
+        if (!from || !to || !subject) {
             throw new Error('From, to, and subject are required for email action');
+        }
+
+        if (!html && !text) {
+            throw new Error('Either HTML or text content is required for email');
         }
 
         const processedSubject = replaceVariable(subject, context);
@@ -42,6 +58,7 @@ export async function executeEmailAction(
         })
 
         const result = await response.json()
+        console.log("email node result",result)
 
         if(!response.ok) {
             throw new Error(`Email error response: ${result.message}`)

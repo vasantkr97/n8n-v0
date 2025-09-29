@@ -5,7 +5,6 @@ import { executeWorkflow } from "../engine/executeWorkflow";
 export const manualExecute = async (req: Request, res: Response) => {
   try {
       const { workflowId } = req.params;
-      const triggerData = req.body;
       const userId = req.user!.id; // Get userId from authenticated user
 
       if (!userId) {
@@ -21,11 +20,6 @@ export const manualExecute = async (req: Request, res: Response) => {
 
       if (!workflow) {
           return res.status(404).json({ error: "Workflow not found or access denied"});
-      }
-
-      //checking is workflow is active
-      if (!workflow.isActive) {
-          return res.status(400).json({ error: "Workflow is not active"});
       }
 
       const executionId = await executeWorkflow(workflowId, userId, "MANUAL")

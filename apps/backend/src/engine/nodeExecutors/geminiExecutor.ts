@@ -8,7 +8,8 @@ export async function executeGeminiAction (
     credentials: any
 ): Promise<any> {
     try {
-        if (!credentials || !credentials.data.apikey) {
+        console.log("gemini node called");
+        if (!credentials || !credentials.data.apiKey) {
             throw new Error("Gemini Credentiasl not Found")
         }
 
@@ -44,6 +45,7 @@ export async function executeGeminiAction (
         );
 
         const result = await response.json();
+        console.log("gemini node result", result);
 
         if (!response.ok) {
             throw new Error(`Gemini API error: ${result.error?.message}`)

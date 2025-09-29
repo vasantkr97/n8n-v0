@@ -1,6 +1,5 @@
 import { prisma } from "@n8n/db";
 import { Request, Response } from "express";
-import { CredentialsSchema } from "@n8n/validator";
 
 export interface AuthRequest extends Request {
     user?: {
@@ -24,7 +23,7 @@ export const postCredentials = async (req: AuthRequest, res:Response) => {
 
         const credentials = await prisma.credentials.create({
             data: {
-                title: title,
+                title,
                 platform,
                 data,
                 userId
@@ -56,7 +55,7 @@ export const getCredentialById = async (req: Request, res: Response) => {
             return res.status(400).json({ msg: "Credential Id requried"})
         }
 
-        const credentialById = await prisma.Credential.findFirst({
+        const credentialById = await prisma.credentials.findFirst({
             where: {
                 id,
                 userId,
@@ -69,7 +68,7 @@ export const getCredentialById = async (req: Request, res: Response) => {
         })
     } catch(error: any) {
         console.error("error while getting the credentials by if", error.message)
-        return res.status(500).json({"Internal Server Error while getting credential by id."})
+        return res.status(500).json({error: "Internal Server Error while getting credential by id."});
     }
 }
 

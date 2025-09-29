@@ -9,7 +9,7 @@
     "prisma:migrate": "prisma migrate dev --schema ./prisma/schema.prisma"
   },
   "devDependencies": {
-    "@prisma/client": "^6.15.0",
+    "@prisma/client": "6.16.2",
     "@types/bun": "latest",
     "prisma": "^6.16.2"
   },
