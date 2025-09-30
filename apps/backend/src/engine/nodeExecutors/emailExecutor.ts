@@ -18,13 +18,18 @@ export async function executeEmailAction(
             where: { id: credentialId }
         })
 
-        if (!credentials || !credentials.data || credentials.data !== 'object') {
+        if (!credentials || !credentials.data || typeof credentials.data !== 'object') {
             throw new Error("Email Credntials not Found");
         };
 
-        const 
+        const credData = credentials.data as {apiKey?: string}
 
-        const { apikey } = credentials.data;
+        const apiKey  = credData.apiKey;
+
+        if (!apiKey) {
+            throw new Error("Resend API key not found in credentials");
+        }
+        
         const { from, to, subject, html, text } = node.parameters;
 
         if (!from || !to || !subject) {
@@ -51,7 +56,7 @@ export async function executeEmailAction(
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
-                "Authorization": `Bearer ${apikey}`,
+                "Authorization": `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(emailData)
