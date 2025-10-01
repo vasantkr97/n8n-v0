@@ -10,9 +10,10 @@ export interface WorkflowNode {
 }
 
 export interface WorkflowConnection {
-    [nodeName: string]: {
-        main: Array<Array<{ node: string, type: string }>>
-    }
+    id: string | number;
+    source: string,
+    target: string,
+    type?: string
 };
 
 export interface ExecutionContext {

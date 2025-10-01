@@ -1,6 +1,6 @@
 import express from "express";
 import { auth } from "../middleware/auth";
-import { deleteExecution, getAllExecutions, getExecutionById, getExecutionStatus, getWorkFlowExecution, manualExecute, stopExecution } from "../controllers/execution.controller";
+import { deleteExecution, getAllExecutions, getExecutionById, getExecutionStatus, getWorkFlowExecution, manualExecute, stopExecution, webhookExecute } from "../controllers/execution.controller";
 import { getWorkflowById } from "../controllers/workflow.controller";
 
 
@@ -12,10 +12,12 @@ router.use(auth);
 //execute workflow manually
 router.post("/workflow/:workflowId/execute", manualExecute);
 
-// get all executions for authenticated user with filtering and pagination
+router.post("/webhookExecute/:workflowId", webhookExecute)
+
+// get all executions for authenticated user
 router.get("/list", getAllExecutions);
 
-// Get execution history for a specific workflow
+// Get execution history for a specific workflow 
 router.get("/workflow/:workflowId/history", getWorkFlowExecution);
 
 // Get detailed information for specific execution by Id

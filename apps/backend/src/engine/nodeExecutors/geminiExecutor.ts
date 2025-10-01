@@ -1,6 +1,8 @@
 import { prisma } from "@n8n/db";
 import { ExecutionContext, WorkflowNode } from "../../types/executionTypes";
 import replaceVariable from "../replaceVariable";
+import { GoogleGenAI } from "@google/genai";
+
 
 export async function executeGeminiAction(
   node: WorkflowNode,
@@ -38,35 +40,22 @@ export async function executeGeminiAction(
 
     const processedPrompt = replaceVariable(prompt, context);
 
-    // FIX: Changed from v1beta to v1
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: processedPrompt }]
-          }],
-          generationConfig: {
-            temperature: temperature,
-            topK: 40,
-            topP: 0.95
-          }
-        })
+    const client = new GoogleGenAI({
+      apiKey: apiKey
+    })
+
+    const response = await client.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: processedPrompt,
+      config: {
+        temperature: Number(temperature) || 0.7,
+        topK: 40,
+        topP: 0.95
       }
-    );
+    })
 
-    const result = await response.json();
-    console.log("gemini node result", result);
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${result.error?.message || JSON.stringify(result)}`);
-    }
-
-    const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    const generatedText = response?.text;
+    console.log(generatedText)
 
     return {
       success: true,
@@ -74,8 +63,8 @@ export async function executeGeminiAction(
         text: generatedText,
         model: model,
         // FIX: Changed usageMetaData to usageMetadata (correct spelling)
-        inputTokens: result.usageMetadata?.promptTokenCount,
-        outputTokens: result.usageMetadata?.candidatesTokenCount
+        inputTokens: response.usageMetadata?.promptTokenCount,
+        outputTokens: response.usageMetadata?.candidatesTokenCount
       },
       message: "Gemini response generated Successfully"
     };

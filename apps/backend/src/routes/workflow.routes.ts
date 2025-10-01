@@ -1,6 +1,6 @@
 import express, { Response, Request } from "express";
 import { createWorkflow, deleteWorkflow, getallWorkflows, getWorkflowById, updateWorkflow } from "../controllers/workflow.controller";
-import {  manualExecute } from "../controllers/execution.controller";
+import {  manualExecute, webhookExecute } from "../controllers/execution.controller";
 import { auth } from "../middleware/auth";
 const router = express.Router();
 

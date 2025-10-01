@@ -38,6 +38,29 @@ export const manualExecute = async (req: Request, res: Response) => {
   }
 };
 
+export const webhookExecute = async (req: Request, res: Response) => {
+  try {
+    const { workflowId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(400).json({ msg: "User is not Authenticated."})
+    };
+
+    const executionId = executeWorkflow(workflowId, userId, "WEBHOOK");
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        executionId,
+        message: "webhook workflow triggered successfully"
+      }
+    })
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error.message})
+  }
+};
+
 export const getExecutionById = async (req: Request, res: Response) => {
   try {
   const { executionId }= req.params;
@@ -82,7 +105,7 @@ export const getExecutionById = async (req: Request, res: Response) => {
 export const getAllExecutions = async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { page = 1, limit = 20, status, workflowId, mode } = req.query;
+    const { status, workflowId, mode } = req.query;
 
     const where: any = {
       userId
@@ -113,8 +136,7 @@ export const getAllExecutions = async (req: Request, res: Response) => {
       ,
     },
     orderBy: { createdAt: "desc"},
-    skip: (Number(page) - 1) * Number(limit),
-    take: Number(limit),
+    
   });
 
     const total = await prisma.execution.count({
@@ -123,12 +145,6 @@ export const getAllExecutions = async (req: Request, res: Response) => {
 
     res.json({
       executions,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        pages: Math.ceil(total / parseInt(limit as string))
-      }
     });
   } catch (error) {
     console.error("Get all executions error:", error);
@@ -171,8 +187,7 @@ export const getWorkFlowExecution = async (req: Request, res: Response) => {
       orderBy: {
         createdAt: "desc"
       },
-      skip: (Number(page)-1)*Number(limit),
-      take: Number(limit)
+      
     });
 
     const totalCount = await prisma.execution.count({

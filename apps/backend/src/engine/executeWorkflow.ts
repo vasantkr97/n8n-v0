@@ -3,13 +3,11 @@ import { ExecutionContext, WorkflowConnection, WorkflowNode } from "../types/exe
 import { executeTelegramAction } from "./nodeExecutors/telegramExecutor";
 import { executeEmailAction } from "./nodeExecutors/emailExecutor";
 import { executeGeminiAction } from "./nodeExecutors/geminiExecutor";
-import { WatchDirectoryFlags } from "typescript";
-
 
 export async function executeWorkflow(
     workflowId: string,
     userId: string,
-    mode: "MANUAL",
+    mode: "MANUAL" | "WEBHOOK",
 ): Promise<string> {
 
     const workflow = await prisma.workflow.findFirst({
@@ -44,8 +42,7 @@ export async function executeWorkflow(
         }
     })
 
-    executeInBackground(execution.id, workflowId, userId);
-
+    executeInBackground(execution.id, workflowId, userId, mode);
     return execution.id
 };
 
@@ -54,6 +51,7 @@ async function executeInBackground(
     executionId: string,
     workflowId: string,
     userId: string,
+    mode: "MANUAL" | "WEBHOOK"
 ) {
 
     try {
@@ -71,14 +69,14 @@ async function executeInBackground(
         };
 
         const nodes = workflow.nodes as unknown as WorkflowNode[];
-        const connections = workflow.connections as unknown as WorkflowConnection;
+        const connections = workflow.connections as unknown as WorkflowConnection[];
 
         //create execution Context
         const context: ExecutionContext = {
             workflowId,
             executionId,
             userId,
-            mode: "MANUAL",
+            mode: mode,
             data: {},
             nodeResults: {}
         }
@@ -117,7 +115,7 @@ async function executeInBackground(
 async function executeNodeChain(
     currentNode: WorkflowNode,
     allNodes: WorkflowNode[],
-    connections: WorkflowConnection,
+    connections: WorkflowConnection[],
     context: ExecutionContext,
 ): Promise<any> {
     //execute Current Node
@@ -129,22 +127,38 @@ async function executeNodeChain(
     //Update context data with the latest successfull node result for immediate next access
     if (nodeResult && nodeResult.success && nodeResult.data) {
         context.data = nodeResult.data;
-    }
+    };
 
-    //get next node from Connections
-    const nodeConnections = connections[currentNode.name]
-    if (!nodeConnections || !nodeConnections.main) {
+    const nextEdges = connections.filter(
+        (conn) => conn.source === currentNode.name,
+    );
+
+    if(!nextEdges.length) {
         return nodeResult
     };
 
-    for (const connectionGroup of nodeConnections.main) {
-        for (const connection of connectionGroup) {
-            const nextNode = allNodes.find(node => node.name === connection.node);
-            if (nextNode) {
-                await executeNodeChain(nextNode, allNodes, connections, context)
-            }
+    for (const edges of nextEdges) {
+        const nextNode = allNodes.find((node) => node.name === edges.target);
+        if (nextNode) {
+            await executeNodeChain(nextNode, allNodes, connections, context)
         }
     }
+
+    //get next node from Connections
+    //N8N style connections
+    // const nodeConnections = connections[currentNode.name]
+    // if (!nodeConnections || !nodeConnections.main) {
+    //     return nodeResult
+    // };
+
+    // for (const connectionGroup of nodeConnections.main) {
+    //     for (const connection of connectionGroup) {
+    //         const nextNode = allNodes.find(node => node.name === connection.node);
+    //         if (nextNode) {
+    //             await executeNodeChain(nextNode, allNodes, connections, context)
+    //         }
+    //     }
+    // }
 
     return context.nodeResults;
 };
