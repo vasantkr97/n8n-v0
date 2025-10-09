@@ -1,50 +1,48 @@
 import { Route, Routes, Navigate } from "react-router-dom";
 // import { Toaster } from "react-hot-toast"; // Temporarily commented out
-import useAuthUser from "./hooks/userHooks/useAuthUser";
-import Signin from "./pages/Signin";
-import Signup from "./pages/Signup";
+// import useAuthUser from "./hooks/userHooks/useAuthUser";
 import WorkflowEditor from "./pages/WorkflowEditor";
 import Sidebar from "./pages/Sidebar";
 import Credentials from "./pages/Credentials";
-import Executions from "./pages/Executions";
+
 
 // Protected Route Component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isLoading, authUser } = useAuthUser();
+// function ProtectedRoute({ children }: { children: React.ReactNode }) {
+//   const { isLoading, authUser } = useAuthUser();
   
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
+//   if (isLoading) {
+//     return (
+//       <div className="flex items-center justify-center h-screen">
+//         <div className="text-lg">Loading...</div>
+//       </div>
+//     );
+//   }
   
-  if (!authUser) {
-    return <Navigate to="/signin" replace />;
-  }
+//   if (!authUser) {
+//     return <Navigate to="/signin" replace />;
+//   }
   
-  return <>{children}</>;
-}
+//   return <>{children}</>;
+// }
 
 // Public Route Component (redirect to dashboard if already authenticated)
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isLoading, authUser } = useAuthUser();
+// function PublicRoute({ children }: { children: React.ReactNode }) {
+//   const { isLoading, authUser } = useAuthUser();
   
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
+//   if (isLoading) {
+//     return (
+//       <div className="flex items-center justify-center h-screen">
+//         <div className="text-lg">Loading...</div>
+//       </div>
+//     );
+//   }
   
-  if (authUser) {
-    return <Navigate to="/dashboard" replace />;
-  }
+//   if (authUser) {
+//     return <Navigate to="/dashboard" replace />;
+//   }
   
-  return <>{children}</>;
-}
+//   return <>{children}</>;
+// }
 
 // Dashboard Layout Component
 function DashboardLayout() {
@@ -64,7 +62,7 @@ export default function App() {
       {/* <Toaster position="top-right" /> Temporarily commented out */}
       <Routes>
         {/* Public Routes */}
-        <Route 
+        {/* <Route 
           path="/signin" 
           element={
               <Signin />
@@ -76,7 +74,7 @@ export default function App() {
           element={
               <Signup />
           } 
-        />
+        /> */}
         
         {/* Protected Routes */}
         <Route 
@@ -85,12 +83,12 @@ export default function App() {
               <DashboardLayout />
           } 
         />
-        <Route 
+        {/* <Route 
           path="/workflow/:id" 
           element={
               <DashboardLayout />
           } 
-        />
+        /> */}
         <Route 
           path="/credentials" 
           element={
@@ -102,7 +100,7 @@ export default function App() {
               </div>
           } 
         />
-        <Route 
+        {/* <Route 
           path="/executions" 
           element={
               <div className="flex h-screen">
@@ -112,7 +110,7 @@ export default function App() {
                 </div>
               </div>
           } 
-        />
+        />  */}
         
         {/* Default Redirects */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

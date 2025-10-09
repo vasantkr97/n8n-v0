@@ -4,12 +4,12 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 // AgentNode component represents a visual agent node in the flow graph with multiple connection points
 const AgentNode = memo(({ data, selected }: NodeProps) => {
   // Determine node color based on its state
-  const getNodeColor = () => {
-    if (data?.hasError) return '#ff6b6b'; // Red for error
-    if (data?.isSuccess) return '#51cf66'; // Green for success
-    if (data?.isExecuting) return '#339af0'; // Blue for executing
-    return (data as any)?.color || '#6f42c1'; // Purple for agent nodes
-  };
+  // const getNodeColor = () => {
+  //   if (data?.hasError) return '#ff6b6b'; // Red for error
+  //   if (data?.isSuccess) return '#51cf66'; // Green for success
+  //   if (data?.isExecuting) return '#339af0'; // Blue for executing
+  //   return (data as any)?.color || '#6f42c1'; // Purple for agent nodes
+  // };
 
 
   const isTrigger = Boolean((data as any)?.isTrigger);
@@ -94,7 +94,7 @@ const AgentNode = memo(({ data, selected }: NodeProps) => {
         {/* Status Indicator Circle (top-right corner) */}
         <div
           className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-800 shadow-lg"
-          style={{ backgroundColor: getNodeColor() }}
+          // style={{ backgroundColor: getNodeColor() }}
         >
           {(data as any)?.isExecuting && (
             <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin" />

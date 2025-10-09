@@ -105,7 +105,7 @@ export const getExecutionById = async (req: Request, res: Response) => {
 export const getAllExecutions = async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { page = 1, limit = 20, status, workflowId, mode } = req.query;
+    const { status, workflowId, mode } = req.query;
 
     const where: any = {
       userId
@@ -136,8 +136,6 @@ export const getAllExecutions = async (req: Request, res: Response) => {
       ,
     },
     orderBy: { createdAt: "desc"},
-    skip: (Number(page) - 1) * Number(limit),
-    take: Number(limit),
   });
 
     const total = await prisma.execution.count({
@@ -146,12 +144,6 @@ export const getAllExecutions = async (req: Request, res: Response) => {
 
     res.json({
       executions,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        pages: Math.ceil(total / parseInt(limit as string))
-      }
     });
   } catch (error) {
     console.error("Get all executions error:", error);
@@ -162,7 +154,7 @@ export const getAllExecutions = async (req: Request, res: Response) => {
 export const getWorkFlowExecution = async (req: Request, res: Response) => {
   try {
     const { workflowId } = req.params;
-    const { page = 1, limit = 10, status } = req.query;
+    const { status } = req.query;
     const userId = req.user!.id;
 
     if (!userId) {
@@ -194,8 +186,6 @@ export const getWorkFlowExecution = async (req: Request, res: Response) => {
       orderBy: {
         createdAt: "desc"
       },
-      skip: (Number(page)-1)*Number(limit),
-      take: Number(limit)
     });
 
     const totalCount = await prisma.execution.count({
@@ -206,12 +196,6 @@ export const getWorkFlowExecution = async (req: Request, res: Response) => {
       success: true,
       data: executions,
       count: executions.length,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total:totalCount,
-        totalPages: Math.ceil(totalCount/Number(page)),
-      }
     })
 
   } catch (error: any) {

@@ -18,6 +18,7 @@ export const WorkflowToolbar = ({
   onSaveWorkflow,
   onNewWorkflow,
   onExecuteWorkflow,
+
   isWorkflowActive,
   onToggleActive,
   isSaving,
@@ -40,7 +41,7 @@ export const WorkflowToolbar = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-2 bg-gray-900 border-b border-gray-700 shadow-md">
+    <div className="flex items-center justify-between p-2 bg-gray-950 border-b border-gray-700 shadow-md">
       {/* Left side - Title and controls */}
       <div className="flex items-center space-x-4">
         {/* Workflow Title */}
@@ -94,7 +95,7 @@ export const WorkflowToolbar = ({
         {/* New Workflow */}
         <button
           onClick={onNewWorkflow}
-          className="px-3 py-1.5 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors flex items-center space-x-2"
+          className="px-3 py-1.5 text-gray-200 hover:text-white bg-orange-700 hover:bg-orange-800 rounded-lg transition-colors flex items-center space-x-2"
           title="Create new workflow"
         >
           <span className='font-semibold'>New Workflow</span>

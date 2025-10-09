@@ -2,6 +2,7 @@ import { useState } from "react";
 import { GeminiParams } from "./nodeParams/GeminiParams";
 import { TelegramParams } from "./nodeParams/TelegramParams";
 import { EmailParams } from "./nodeParams/EmailParams";
+import GenericParams from "./nodeParams/GenericParams";
 
 export function NodeParametersPanel({ node, onClose, onSave }: any) {
   const [localData, setLocalData] = useState(node.data || {});
@@ -20,7 +21,7 @@ export function NodeParametersPanel({ node, onClose, onSave }: any) {
       case "email":
         return <EmailParams data={localData} setData={setLocalData} />;
       default:
-        return <div>No parameters for this node</div>;
+        return <GenericParams data={localData} setData={setLocalData} />;
     }
   };
 

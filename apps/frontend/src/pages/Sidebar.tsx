@@ -30,7 +30,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="w-48 bg-gray-900 text-white flex flex-col">
+    <div className="w-48 bg-gray-950 text-white flex flex-col">
       {/* Header */}
       <div className="p-3 border-b border-gray-700">
         <h1 className="text-xl font-bold">n8n Workflow</h1>
