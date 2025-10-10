@@ -95,7 +95,7 @@ export const WorkflowToolbar = ({
         {/* New Workflow */}
         <button
           onClick={onNewWorkflow}
-          className="px-3 py-1.5 text-gray-200 hover:text-white bg-orange-700 hover:bg-orange-800 rounded-lg transition-colors flex items-center space-x-2"
+          className="px-2.5 py-1.5 text-gray-200 hover:text-white bg-orange-600 hover:bg-orange-800 rounded-lg transition-colors flex items-center space-x-2"
           title="Create new workflow"
         >
           <span className='font-semibold'>New Workflow</span>

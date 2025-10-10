@@ -106,6 +106,10 @@ export default function WorkflowEditor() {
   const handleNewWorkflow = useCallback(() => {
     setNodes([]);
     setEdges([]);
+    setSelectedNode(null);
+    setShowParametersPanel(false);
+    setWorkflowTitle('Untitled Workflow');
+    setIsWorkflowActive(false);
   }, [setNodes, setEdges]);
 
   // Handle workflow save
