@@ -1,15 +1,24 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuthUser from "../hooks/userHooks/useAuthUser";
+import useSignout from "../hooks/userHooks/useSignout";
 
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
+  const { signout, isLoading: isSigningOut } = useSignout();
 
   const handleSignout = () => {
-    // Call signout API and redirect
-    // This should be implemented with your signout hook
-    navigate("/signin");
+    signout(undefined, {
+      onSuccess: () => {
+        navigate("/signin");
+      },
+      onError: (error) => {
+        console.error("Signout error:", error);
+        // Still redirect even if signout fails
+        navigate("/signin");
+      }
+    });
   };
 
   const menuItems = [
@@ -86,9 +95,12 @@ export default function Sidebar() {
       <div className="px-4 py-1.5 border-t border-gray-700">
         <button
           onClick={handleSignout}
-          className="w-full flex items-center justify-center px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md transition-colors"
+          disabled={isSigningOut}
+          className="w-full flex items-center justify-center px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="font-semibold">Sign Out</span>
+          <span className="font-semibold">
+            {isSigningOut ? "Signing out..." : "Sign Out"}
+          </span>
         </button>
       </div>
     </div>

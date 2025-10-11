@@ -14,6 +14,14 @@ export const createWorkflow = async (req: Request, res: Response) => {
             return res.status(400).json({ msg: "title and tirggerType are required"})
         }
      
+        // Ensure nodes and connections are arrays
+        const workflowNodes = Array.isArray(nodes) ? nodes : [];
+        const workflowConnections = Array.isArray(connections) ? connections : [];
+
+        console.log(`📝 Creating workflow "${title}"`);
+        console.log(`  - Nodes: ${workflowNodes.length}`);
+        console.log(`  - Connections: ${workflowConnections.length}`);
+        console.log(`  - Connections data:`, JSON.stringify(workflowConnections, null, 2));
 
         const workflow = await prisma.workflow.create({
             data: {
@@ -21,17 +29,19 @@ export const createWorkflow = async (req: Request, res: Response) => {
                 isActive: isActive ?? false,
                 triggerType,
                 userId,
-                nodes: nodes ?? {},
-                connections: connections ?? {},
+                nodes: workflowNodes,
+                connections: workflowConnections,
             }
         });
+
+        console.log(`✅ Workflow created with ID: ${workflow.id}`);
 
         res.status(201).json({
             success: true,
             data: workflow
         })
     } catch (error) {
-        console.error("Error creating workflow:", error);
+        console.error("❌ Error creating workflow:", error);
         res.status(500).json({ error: "interval server error at Creating workflow"})
     }
 };
@@ -75,6 +85,8 @@ export const getWorkflowById = async (req: Request, res: Response) => {
         const { workflowId } = req.params;
         const userId = req.user?.id;
 
+        console.log(`📖 Fetching workflow ${workflowId} for user ${userId}`);
+
         if (!userId) {
             return res.status(400).json({ error: "UserId  is required"})
         };
@@ -105,15 +117,29 @@ export const getWorkflowById = async (req: Request, res: Response) => {
         });
 
         if (!workflow) {
+            console.log(`❌ Workflow ${workflowId} not found or access denied`);
             return res.status(404).json({ error: "Workflow not found or access denied"});
         };
+
+        // Log workflow data being returned
+        const nodes = workflow.nodes as any;
+        const connections = workflow.connections as any;
+        console.log(`✅ Workflow ${workflowId} found:`);
+        console.log(`  - Title: ${workflow.title}`);
+        console.log(`  - Nodes: ${Array.isArray(nodes) ? nodes.length : 'Not an array!'}`);
+        console.log(`  - Connections: ${Array.isArray(connections) ? connections.length : 'Not an array!'}`);
+        if (Array.isArray(connections)) {
+            console.log(`  - Connections data:`, JSON.stringify(connections, null, 2));
+        } else {
+            console.log(`  - ⚠️ Connections is not an array:`, connections);
+        }
 
         res.status(200).json({
             success: true,
             data: workflow
         })
     } catch(error) {
-        console.error("Error fetching workflow ising Id:", error);
+        console.error("❌ Error fetching workflow using Id:", error);
         res.status(500).json({ error: "internal server error while getting workflow using Id"})
     }
 };
@@ -144,25 +170,39 @@ export const updateWorkflow = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Workflow not found or access denied"});
         };
 
+        console.log(`📝 Updating workflow ${workflowId}`);
+        if (nodes !== undefined) {
+            const workflowNodes = Array.isArray(nodes) ? nodes : [];
+            console.log(`  - Nodes: ${workflowNodes.length}`);
+        }
+        if (connections !== undefined) {
+            const workflowConnections = Array.isArray(connections) ? connections : [];
+            console.log(`  - Connections: ${workflowConnections.length}`);
+            console.log(`  - Connections data:`, JSON.stringify(workflowConnections, null, 2));
+        }
+
+        // Prepare update data, ensuring arrays remain arrays
+        const updateData: any = {};
+        if (title !== undefined) updateData.title = title;
+        if (isActive !== undefined) updateData.isActive = isActive;
+        if (triggerType !== undefined) updateData.triggerType = triggerType;
+        if (nodes !== undefined) updateData.nodes = Array.isArray(nodes) ? nodes : [];
+        if (connections !== undefined) updateData.connections = Array.isArray(connections) ? connections : [];
         
         const updatedWorkflow = await prisma.workflow.update({
             where: { id: workflowId },
-            data: {
-                title: title ?? existingWorkflow.title,
-                isActive: isActive ?? existingWorkflow.isActive,
-                triggerType: triggerType ?? existingWorkflow.triggerType,
-                nodes: nodes ?? existingWorkflow.nodes,
-                connections: connections ?? existingWorkflow.connections,
-            },
+            data: updateData,
         });
         
+        console.log(`✅ Workflow ${workflowId} updated successfully`);
+
         res.status(200).json({
             success: true,
             data: updatedWorkflow
         });
 
     } catch (error) {
-        console.error("Error while updating the workflow:", error);
+        console.error("❌ Error while updating the workflow:", error);
         return res.status(500).json({ error: "Internal server error"})
     }
 };

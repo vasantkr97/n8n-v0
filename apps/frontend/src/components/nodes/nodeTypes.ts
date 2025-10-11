@@ -25,6 +25,8 @@ export const createN8nNode = (
     isExecuting?: boolean;
     hasError?: boolean;
     isSuccess?: boolean;
+    workflowId?: string | null;
+    isTrigger?: boolean;
   }
 ) => ({
   id,

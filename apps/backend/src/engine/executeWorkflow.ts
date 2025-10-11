@@ -71,6 +71,12 @@ async function executeInBackground(
         const nodes = workflow.nodes as unknown as WorkflowNode[];
         const connections = workflow.connections as unknown as WorkflowConnection[];
 
+        console.log("📋 Execution data:");
+        console.log(`  - Nodes: ${nodes.length}`);
+        console.log(`  - Connections: ${connections.length}`);
+        console.log("  - Nodes:", JSON.stringify(nodes, null, 2));
+        console.log("  - Connections:", JSON.stringify(connections, null, 2));
+
         //create execution Context
         const context: ExecutionContext = {
             workflowId,
@@ -81,10 +87,14 @@ async function executeInBackground(
             nodeResults: {}
         }
 
-        const triggerNode =  nodes.find(node => node.type === "Trigger")
+        // Find trigger node - check for various trigger types
+        const triggerTypes = ["trigger", "manual", "webhook", "schedule", "cron"];
+        const triggerNode = nodes.find(node => 
+            triggerTypes.includes(node.type?.toLowerCase() || "")
+        );
 
         if (!triggerNode) {
-            throw new Error("no trigger node found");
+            throw new Error("No trigger node found. Please add a trigger node (webhook, manual, or schedule) to your workflow.");
         }
 
         //Execute trigger node starting from trigger node
@@ -99,11 +109,17 @@ async function executeInBackground(
             }
         })
     } catch (error: any) {
+        console.error("❌ Execution failed:", error);
+        console.error("Error stack:", error.stack);
         await prisma.execution.update({
             where: { id: executionId },
             data: {
                 status: "FAILED",
-                results: { error: error.message},
+                results: { 
+                    error: error.message,
+                    stack: error.stack,
+                    timestamp: new Date().toISOString()
+                },
                 finishedAt: new Date()
             }
         })
@@ -165,37 +181,51 @@ async function executeNodeChain(
 
 
 async function executeNode(node: WorkflowNode, context: ExecutionContext): Promise<any> {
-    console.log(`Executing node: ${node.name} (${node.type})`);
+    console.log(`\n🔄 Executing node: ${node.name} (${node.type})`);
+    console.log(`  - Node data:`, JSON.stringify(node, null, 2));
 
-    if (node.type === "Trigger") {
+    // Check if this is a trigger node
+    const triggerTypes = ["trigger", "manual", "webhook", "schedule", "cron"];
+    if (triggerTypes.includes(node.type?.toLowerCase() || "")) {
+        console.log(`  ✅ Trigger node executed`);
         return {
             success: true,
             data: context.data,
             timeStamp: new Date().toISOString()
         }
     }
+    
     let credentialId = null;
     if (node.credentials) {
-        //the credentials object contains the credentials ID directly
-
+        console.log(`  🔑 Credentials found:`, JSON.stringify(node.credentials, null, 2));
+        
         if (typeof node.credentials === 'string') {
-            //if credentials is a string, its the ID
             credentialId = node.credentials;
+            console.log(`  → Extracted as string: ${credentialId}`);
         } else if (node.credentials.id) {
-            //if credentials is an object with an id property
             credentialId = node.credentials.id;
+            console.log(`  → Extracted from .id property: ${credentialId}`);
         } else {
-            //if credentials is an object where the key maps to the ID
             const credentialKey = Object.keys(node.credentials)[0];
             const credentialsInfo = node.credentials[credentialKey];
+            console.log(`  → Trying key: ${credentialKey}, value:`, credentialsInfo);
 
-          if (typeof credentialsInfo === "string") {
-            credentialId = credentialsInfo;
-          } else if( credentialsInfo && credentialsInfo.id){
-            credentialId = credentialsInfo.id
-          }
+            if (typeof credentialsInfo === "string") {
+                credentialId = credentialsInfo;
+                console.log(`  → Extracted from key as string: ${credentialId}`);
+            } else if (credentialsInfo && credentialsInfo.id) {
+                credentialId = credentialsInfo.id;
+                console.log(`  → Extracted from key.id: ${credentialId}`);
+            }
         }
-        console.log("credentials id:", JSON.stringify(credentialId, null ,2));
+        
+        if (!credentialId) {
+            console.error(`  ❌ Failed to extract credential ID from:`, node.credentials);
+        } else {
+            console.log(`  ✅ Final credential ID: ${credentialId}`);
+        }
+    } else {
+        console.log(`  ⚠️  No credentials attached to this node`);
     }
 
     //Route tp appropriate executor

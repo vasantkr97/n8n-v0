@@ -4,9 +4,13 @@ export const getAuthUser = async () => {
     try {
         const { data } = await axiosInstance.get("/auth/me")
         return data
-    } catch (error) {
-        console.log("Error in getAuthUser:", error);
-        return null;
+    } catch (error: any) {
+        // Silently handle auth errors (401, 403) - user is just not authenticated
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            return { user: null, authentication: false };
+        }
+        console.error("Error in getAuthUser:", error);
+        return { user: null, authentication: false };
     }
 };
 
@@ -21,6 +25,6 @@ export const signin = async (signinData: any) => {
 };
 
 export const signout = async () => {
-    const res = await axiosInstance.post('auth/signout');
+    const res = await axiosInstance.post('/auth/signout');
     return res.data
 }

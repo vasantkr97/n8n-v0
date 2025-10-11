@@ -13,11 +13,17 @@ export async function executeTelegramAction(
         if (!credentialId) {
             throw new Error("credential id not found")
         }
+        console.log("🔍 Looking up credential with ID:", credentialId);
         const credentials = await prisma.credentials.findFirst({
             where: { id: credentialId}
         });
         
-        console.log("Retrieved Credentials",credentials)
+        console.log("🔍 Retrieved Credentials:", credentials);
+        console.log("🔍 All credentials in database:");
+        const allCreds = await prisma.credentials.findMany({
+            select: { id: true, title: true, platform: true }
+        });
+        console.log(allCreds);
         if (!credentials || !credentials.data || typeof credentials.data !== 'object') {
             throw new Error("Telegram credentials not found");
         };

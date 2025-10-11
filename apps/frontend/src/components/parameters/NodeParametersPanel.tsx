@@ -6,8 +6,13 @@ import GenericParams from "./nodeParams/GenericParams";
 
 export function NodeParametersPanel({ node, onClose, onSave }: any) {
   const [localData, setLocalData] = useState(node.data || {});
+  
+  console.log('📋 NodeParametersPanel opened for node:', node.id);
+  console.log('📋 Initial node data:', node.data);
+  console.log('📋 Local data state:', localData);
 
   const handleSave = () => {
+    console.log('💾 Saving node data:', localData);
     onSave(node.id, localData);
     onClose();
   };

@@ -1,10 +1,25 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCredentials, postCredentials, deleteCredentials } from "../../apiServices/credentials.api";
 
-// Mock API
-const getTelegramCredentials = async () => [];
-const createTelegramCredential = async (data: any) => data;
-const deleteTelegramCredential = async (id: string) => ({ id });
+// Filter credentials by platform
+const getTelegramCredentials = async () => {
+  const response = await getCredentials();
+  const allCredentials = response.credentials || [];
+  return allCredentials.filter((cred: any) => cred.platform === 'telegram');
+};
+
+const createTelegramCredential = async (formData: { title: string; botToken: string }) => {
+  return await postCredentials({
+    title: formData.title,
+    platform: 'telegram',
+    data: { botToken: formData.botToken }
+  });
+};
+
+const deleteTelegramCredential = async (id: string) => {
+  return await deleteCredentials(id);
+};
 
 export function TelegramCredentials() {
   const queryClient = useQueryClient();

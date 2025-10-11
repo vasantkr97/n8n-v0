@@ -3,19 +3,20 @@ import { getAuthUser } from "../../apiServices/auth.api"
 
 
 const useAuthUser = () => {
-    const authUser = useQuery({
+    const { data, isLoading, error } = useQuery({
         queryKey: ["authUser"],
         queryFn: getAuthUser,
         retry: false,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false, // Don't refetch on window focus
+        refetchOnMount: false, // Don't refetch on component mount if data exists
     });
 
-    // Return a default user if auth fails for development
-    const defaultUser = { id: 'dev-user', email: 'dev@example.com', name: 'Dev User' };
-
     return {
-        isLoading: authUser.isLoading,
-        error: authUser.error,
-        authUser: authUser.data?.user || defaultUser
+        isLoading,
+        error,
+        authUser: data?.user || null,
+        isAuthenticated: !!data?.user
     }
 };
 

@@ -6,6 +6,7 @@ interface WorkflowToolbarProps {
   onSaveWorkflow: () => void;
   onNewWorkflow: () => void;
   onExecuteWorkflow: () => void;
+  onWebhookExecute?: () => void;
   isWorkflowActive: boolean;
   onToggleActive: () => void;
   isSaving: boolean;
@@ -18,7 +19,7 @@ export const WorkflowToolbar = ({
   onSaveWorkflow,
   onNewWorkflow,
   onExecuteWorkflow,
-
+  onWebhookExecute,
   isWorkflowActive,
   onToggleActive,
   isSaving,
@@ -138,6 +139,18 @@ export const WorkflowToolbar = ({
             </>
           )}
         </button>
+
+        {/* Webhook Execute */}
+        {onWebhookExecute && (
+          <button
+            onClick={onWebhookExecute}
+            disabled={!isWorkflowActive}
+            className="px-3 py-1 bg-purple-700 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+            title={isWorkflowActive ? "Execute via webhook" : "Activate workflow to execute webhook"}
+          >
+            <span className='font-semibold'>Webhook</span>
+          </button>
+        )}
       </div>
     </div>
   );

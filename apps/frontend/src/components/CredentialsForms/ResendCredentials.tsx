@@ -1,10 +1,25 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCredentials, postCredentials, deleteCredentials } from "../../apiServices/credentials.api";
 
-// Mock API
-const getResendCredentials = async () => [];
-const createResendCredential = async (data: any) => data;
-const deleteResendCredential = async (id: string) => ({ id });
+// Filter credentials by platform
+const getResendCredentials = async () => {
+  const response = await getCredentials();
+  const allCredentials = response.credentials || [];
+  return allCredentials.filter((cred: any) => cred.platform === 'resend' || cred.platform === 'email');
+};
+
+const createResendCredential = async (formData: { title: string; apiKey: string; fromEmail: string }) => {
+  return await postCredentials({
+    title: formData.title,
+    platform: 'email',
+    data: { apiKey: formData.apiKey, fromEmail: formData.fromEmail }
+  });
+};
+
+const deleteResendCredential = async (id: string) => {
+  return await deleteCredentials(id);
+};
 
 export function ResendCredentials() {
   const queryClient = useQueryClient();

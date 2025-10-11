@@ -47,7 +47,19 @@ export const webhookExecute = async (req: Request, res: Response) => {
       return res.status(400).json({ msg: "User is not Authenticated."})
     };
 
-    const executionId = executeWorkflow(workflowId, userId, "WEBHOOK");
+    // Verify workflow exists
+    const workflow = await prisma.workflow.findFirst({
+      where: {
+        id: workflowId,
+        userId: userId
+      },
+    });
+
+    if (!workflow) {
+      return res.status(404).json({ error: "Workflow not found or access denied"});
+    }
+
+    const executionId = await executeWorkflow(workflowId, userId, "WEBHOOK");
 
     return res.status(200).json({
       success: true,
@@ -285,8 +297,10 @@ export const deleteExecution = async (req: Request, res: Response) => {
     const { executionId } = req.params;
     const userId = req.user!.id;
 
+    console.log(`🗑️ Deleting execution ${executionId} for user ${userId}`);
+
     if (!userId) {
-      return res.status(400).json({ msg: "User not Authenticated"});
+      return res.status(400).json({ error: "User not Authenticated"});
     };
 
     const execution = await prisma.execution.findFirst({
@@ -294,22 +308,28 @@ export const deleteExecution = async (req: Request, res: Response) => {
     });
 
     if (!execution) {
-      return res.status(404).json({ msg: "Execution not found or access denied"})
+      console.log(`❌ Execution ${executionId} not found or access denied`);
+      return res.status(404).json({ error: "Execution not found or access denied"})
     }
 
-     await prisma.execution.delete({
+    await prisma.execution.delete({
       where: {
         id: executionId,
       }
-    })
+    });
 
-    return res.status(200).json({ success: true, msg: "Execution deleted"})
+    console.log(`✅ Execution ${executionId} deleted successfully`);
+    return res.status(200).json({ 
+      success: true, 
+      message: "Execution deleted successfully" 
+    });
 
   } catch (error: any) {
-    console.error("Error while deleting execution:", error);
+    console.error("❌ Error while deleting execution:", error);
     return res.status(500).json({
+      success: false,
       error: "Internal server error while deleting execution",
-      msg: error.message
+      message: error.message
     }) 
   }
 }

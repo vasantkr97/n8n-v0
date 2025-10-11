@@ -1,10 +1,25 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCredentials, postCredentials, deleteCredentials } from "../../apiServices/credentials.api";
 
-// Mock API (replace with real backend)
-const getGeminiCredentials = async () => [];
-const createGeminiCredential = async (data: any) => data;
-const deleteGeminiCredential = async (id: string) => ({ id });
+// Filter credentials by platform
+const getGeminiCredentials = async () => {
+  const response = await getCredentials();
+  const allCredentials = response.credentials || [];
+  return allCredentials.filter((cred: any) => cred.platform === 'gemini');
+};
+
+const createGeminiCredential = async (formData: { title: string; apiKey: string }) => {
+  return await postCredentials({
+    title: formData.title,
+    platform: 'gemini',
+    data: { apiKey: formData.apiKey }
+  });
+};
+
+const deleteGeminiCredential = async (id: string) => {
+  return await deleteCredentials(id);
+};
 
 export function GeminiCredentials() {
   const queryClient = useQueryClient();

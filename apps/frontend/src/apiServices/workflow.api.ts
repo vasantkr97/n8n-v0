@@ -1,34 +1,48 @@
 import { axiosInstance } from "../lib/axios"; 
 
-export const createWorkflow = async () => {
-    const { data } = await axiosInstance.get("/workflows/createWorkflow")
-    return data
+export interface CreateWorkflowData {
+    title: string;
+    isActive?: boolean;
+    triggerType: string;
+    nodes?: any;
+    connections?: any;
 }
 
-export const getallWorkflows = async () => {
-    const { data } = await axiosInstance.get("/workflows/getallWorkflows")
-    return data
+export interface UpdateWorkflowData {
+    title?: string;
+    isActive?: boolean;
+    triggerType?: string;
+    nodes?: any;
+    connections?: any;
 }
 
-export const getWorkflowById = async (workflowId: string ) => {
-    const { data } = await axiosInstance.get(`/workflows/getWorkflowId/${workflowId}`)
-    return data
-}
-
-export const manualExecute = async (workflowId: string) => {
-    const { data } = await axiosInstance.post(`workflows/manual/run/${workflowId}`)
+export const createWorkflow = async (workflowData: CreateWorkflowData) => {
+    const { data } = await axiosInstance.post("/workflows/createWorkflow", workflowData);
     return data;
 }
 
-export const updateWorkflow = async (workflowId: string) => {
-    const { data } = await axiosInstance.put(`workflows/updateWrkflow/${workflowId}`)
-    return data
+export const getallWorkflows = async () => {
+    const { data } = await axiosInstance.get("/workflows/getallWorkflows");
+    return data;
 }
 
-export const deleteWorkflow = async (WorkflowId: string) => {
-    const { data } = await axiosInstance.delete(`/workflows/deleteWorkflow/${WorkflowId}`)
-    return data
+export const getWorkflowById = async (workflowId: string) => {
+    const { data } = await axiosInstance.get(`/workflows/getWorkflowById/${workflowId}`);
+    return data;
+}
+
+export const manualExecute = async (workflowId: string) => {
+    const { data } = await axiosInstance.post(`/workflows/manual/run/${workflowId}`);
+    return data;
+}
+
+export const updateWorkflow = async (workflowId: string, workflowData: UpdateWorkflowData) => {
+    const { data } = await axiosInstance.put(`/workflows/updateWorkflow/${workflowId}`, workflowData);
+    return data;
+}
+
+export const deleteWorkflow = async (workflowId: string) => {
+    const { data } = await axiosInstance.delete(`/workflows/deleteWorkflow/${workflowId}`);
+    return data;
 };
-
-
 
