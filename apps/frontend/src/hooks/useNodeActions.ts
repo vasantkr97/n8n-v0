@@ -49,13 +49,10 @@ export const useNodeActions = ({ workflowId, setNodes, setEdges }: UseNodeAction
   }, [setNodes, workflowId]);
 
   const handleUpdateNodeData = useCallback((nodeId: string, data: any) => {
-    console.log('🔄 Updating node data:', { nodeId, data });
     setNodes((nodes: any) =>
       nodes.map((n: any) => {
         if (n.id === nodeId) {
-          const updatedNode = { ...n, data: { ...n.data, ...data } };
-          console.log('✅ Node updated:', updatedNode);
-          return updatedNode;
+          return { ...n, data: { ...n.data, ...data } };
         }
         return n;
       })

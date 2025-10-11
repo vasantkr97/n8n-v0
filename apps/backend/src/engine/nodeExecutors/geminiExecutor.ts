@@ -10,28 +10,28 @@ export async function executeGeminiAction(
   credentialId: any
 ): Promise<any> {
   try {
-    
     if (!credentialId) {
-      throw new Error("Credentials id not found");
+      throw new Error("Gemini credentials not provided. Please select or create credentials.");
     }
 
+    console.log("🔍 Looking up credential with ID:", credentialId);
     const credentials = await prisma.credentials.findFirst({
       where: { id: credentialId }
     });
 
-    console.log("Retrieved Credentials", credentials);
+    console.log("🔍 Retrieved Credentials:", credentials);
 
     if (!credentials || !credentials.data || typeof credentials.data !== "object") {
       throw new Error("Gemini Credentials not Found");
     }
 
     const credData = credentials.data as { apiKey?: string };
-    const apiKey = credData.apiKey;
-
-    if (!apiKey) {
+    
+    if (!credData.apiKey) {
       throw new Error("Gemini API key not found in credentials");
     }
 
+    const apiKey = credData.apiKey;
     const { prompt, model = "gemini-1.5-flash", temperature = 0.7 } = node.parameters;
 
     if (!prompt) {

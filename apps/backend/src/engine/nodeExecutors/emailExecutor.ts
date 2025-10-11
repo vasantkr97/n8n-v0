@@ -9,26 +9,29 @@ export async function executeEmailAction(
     credentialId: any
 ): Promise<any> {
     try {
-        console.log("email is called")
+        console.log("email is called");
+        
         if (!credentialId) {
-            throw new Error("Email credentialId not found")
+            throw new Error("Email credentials not provided. Please select or create credentials.");
         }
 
+        console.log("🔍 Looking up credential with ID:", credentialId);
         const credentials = await prisma.credentials.findFirst({
             where: { id: credentialId }
-        })
+        });
 
         if (!credentials || !credentials.data || typeof credentials.data !== 'object') {
-            throw new Error("Email Credntials not Found");
-        };
+            throw new Error("Email Credentials not Found");
+        }
 
-        const credData = credentials.data as {apiKey?: string}
+        const credData = credentials.data as {apiKey?: string; fromEmail?: string};
 
-        const apiKey  = credData.apiKey;
-
-        if (!apiKey) {
+        if (!credData.apiKey) {
             throw new Error("Resend API key not found in credentials");
         }
+
+        const apiKey = credData.apiKey;
+        const fromEmail = credData.fromEmail;
         
         const { from, to, subject, html, text } = node.parameters;
 

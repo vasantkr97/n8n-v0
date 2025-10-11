@@ -24,17 +24,18 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
   const isTrigger = Boolean((data as any)?.isTrigger);
   const isWebhook = (data as any)?.type === 'webhook';
   const workflowId = (data as any)?.workflowId;
+  const webhookToken = (data as any)?.webhookToken;
   
-  // Generate webhook URL
-  const webhookUrl = isWebhook && workflowId 
-    ? `http://localhost:4000/api/executions/webhookExecute/${workflowId}`
+  // Generate public webhook URL with token authentication
+  const webhookUrl = isWebhook && workflowId && webhookToken
+    ? `http://localhost:4000/api/executions/webhook/${workflowId}?token=${webhookToken}`
     : null;
 
   const copyWebhookUrl = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (webhookUrl) {
       navigator.clipboard.writeText(webhookUrl);
-      alert('✅ Webhook URL copied to clipboard!\n\nUse this URL to trigger your workflow from external services.');
+      alert('✅ Webhook URL with Token copied to clipboard!\n\n📡 This URL includes your secure authentication token.\n\n🔒 Keep it private! Anyone with this URL can trigger your workflow.\n\n💡 Make sure your workflow is Active (toggle in toolbar).\n\n⚠️ Don\'t share this URL publicly!');
     }
   };
 
@@ -114,14 +115,26 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
 
       {/* Webhook URL Tooltip */}
       {showWebhookUrl && webhookUrl && (
-        <div className="absolute top-full mt-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs p-3 rounded-lg shadow-2xl z-50 w-80 border border-gray-700">
-          <div className="font-semibold mb-2 text-blue-400">📡 Webhook URL:</div>
-          <div className="font-mono bg-gray-800 p-2 rounded break-all text-[10px] mb-2">
+        <div className="absolute top-full mt-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs p-3 rounded-lg shadow-2xl z-50 w-[500px] border border-green-700">
+          <div className="font-semibold mb-2 text-green-400 flex items-center">
+            <span className="mr-2">🔐</span> Secure Webhook URL
+          </div>
+          <div className="font-mono bg-gray-800 p-2 rounded break-all text-[10px] mb-3 border border-gray-700 max-h-24 overflow-y-auto">
             {webhookUrl}
           </div>
-          <div className="text-gray-400 text-[10px]">
-            ✨ Click the button to copy<br/>
-            💡 Use this URL to trigger your workflow from external services
+          <div className="text-gray-300 text-[10px] space-y-1 mb-2">
+            <div>✨ <strong>Click button to copy URL with token</strong></div>
+            <div>🔐 <strong>Token-based authentication</strong> - secure & simple</div>
+            <div>🔒 Workflow must be <strong>Active</strong></div>
+            <div>⚠️ <strong>Keep this URL private!</strong> Don't share publicly</div>
+          </div>
+          <div className="bg-gray-800 p-2 rounded text-[10px] border border-gray-700 mb-2">
+            <div className="text-gray-400 mb-1">Example - Using query parameter:</div>
+            <code className="text-green-400 break-all block">curl -X POST "{webhookUrl}"</code>
+          </div>
+          <div className="bg-gray-800 p-2 rounded text-[10px] border border-gray-700">
+            <div className="text-gray-400 mb-1">Or using header:</div>
+            <code className="text-blue-400 break-all block">curl -X POST http://localhost:4000/api/executions/webhook/{workflowId} \<br/>  -H "X-Webhook-Token: {webhookToken}"</code>
           </div>
         </div>
       )}

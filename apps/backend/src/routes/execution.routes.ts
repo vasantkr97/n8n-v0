@@ -1,12 +1,16 @@
 import express from "express";
 import { auth } from "../middleware/auth";
-import { deleteExecution, getAllExecutions, getExecutionById, getExecutionStatus, getWorkFlowExecution, manualExecute, stopExecution, webhookExecute } from "../controllers/execution.controller";
+import { deleteExecution, getAllExecutions, getExecutionById, getExecutionStatus, getWorkFlowExecution, manualExecute, stopExecution, webhookExecute, publicWebhookExecute } from "../controllers/execution.controller";
 import { getWorkflowById } from "../controllers/workflow.controller";
 
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
+// Public webhook endpoint - NO authentication required
+// Must be defined BEFORE auth middleware
+router.post("/webhook/:workflowId", publicWebhookExecute);
+
+// Apply authentication middleware to all routes below
 router.use(auth);
 
 //execute workflow manually

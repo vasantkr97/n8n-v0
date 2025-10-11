@@ -4,17 +4,22 @@ import { TelegramCredentials } from "../components/CredentialsForms/TelegramCred
 
 export default function Credentials() {
   return (
-    <div className="h-full p-6 bg-gray-700 text-white">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Credentials</h1>
-        <p className="text-gray-300 mb-6">
-          Manage your API keys and authentication credentials
-        </p>
+    <div className="h-full p-6 bg-gray-700 text-white overflow-auto">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2 flex items-center">
+            🔐 Credentials
+          </h1>
+          <p className="text-gray-400 text-base">
+            Manage your API keys and authentication credentials for different services
+          </p>
+        </div>
 
-        {/* Each section is separate */}
-        <GeminiCredentials />
-        <TelegramCredentials />
-        <ResendCredentials />
+        <div className="space-y-6">
+          <GeminiCredentials />
+          <TelegramCredentials />
+          <ResendCredentials />
+        </div>
       </div>
     </div>
   );

@@ -9,24 +9,20 @@ export async function executeTelegramAction(
     credentialId: any
 ): Promise<any> {
     try {
-
         if (!credentialId) {
-            throw new Error("credential id not found")
+            throw new Error("Telegram credentials not provided. Please select or create credentials.");
         }
+
         console.log("🔍 Looking up credential with ID:", credentialId);
         const credentials = await prisma.credentials.findFirst({
             where: { id: credentialId}
         });
         
         console.log("🔍 Retrieved Credentials:", credentials);
-        console.log("🔍 All credentials in database:");
-        const allCreds = await prisma.credentials.findMany({
-            select: { id: true, title: true, platform: true }
-        });
-        console.log(allCreds);
+        
         if (!credentials || !credentials.data || typeof credentials.data !== 'object') {
             throw new Error("Telegram credentials not found");
-        };
+        }
 
         const credData = credentials.data as { botToken?: string};
 
@@ -34,7 +30,7 @@ export async function executeTelegramAction(
             throw new Error("Bot token not found in credentials");
         }
 
-        const  botToken  = credData.botToken;
+        const botToken = credData.botToken;
         const { chatId, message, parseMode = 'HTML' } = node.parameters;
 
         if (!chatId || !message) {

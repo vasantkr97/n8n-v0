@@ -9,22 +9,12 @@ export function TelegramParams({ data, setData }: any) {
         <label className="block font-medium text-gray-700 mb-2">
           Credentials *
         </label>
+        
         <CredentialsSelector
           credentialType="telegram"
           selectedCredentialId={data.credentialsId}
-          onChange={(credentialId) => {
-            console.log('🔧 Setting credential ID:', credentialId);
-            setData({ ...data, credentialsId });
-          }}
+          onChange={(credentialId) => setData({ ...data, credentialsId: credentialId })}
         />
-        <p className="text-xs text-gray-500 mt-1">
-          Select Telegram bot credentials or create new ones in Credentials page
-        </p>
-        {data.credentialsId && (
-          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
-            ✅ Credential selected: {data.credentialsId}
-          </div>
-        )}
       </div>
 
       <div>

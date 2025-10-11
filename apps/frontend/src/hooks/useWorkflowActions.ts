@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createWorkflow, updateWorkflow } from '../apiServices/workflow.api';
 import { manualExecute, webhookExecute } from '../apiServices/execution.api';
 import { getNodeConfig } from '../components/nodes/nodeTypes';
@@ -30,6 +31,7 @@ export const useWorkflowActions = ({
   edges,
   resetWorkflow
 }: UseWorkflowActionsProps) => {
+  const navigate = useNavigate();
 
   const handleTitleChange = useCallback(async (title: string) => {
     const oldTitle = workflowTitle;
@@ -77,13 +79,15 @@ export const useWorkflowActions = ({
       
       if (response.data?.id) {
         setWorkflowId(response.data.id);
+        // Navigate to the workflow URL so it persists on refresh
+        navigate(`/workflow/${response.data.id}`);
         alert('New workflow created!');
       }
     } catch (error: any) {
       console.error('Error creating workflow:', error);
       alert(`Failed to create workflow: ${error.response?.data?.error || error.message}`);
     }
-  }, [resetWorkflow, setWorkflowId]);
+  }, [resetWorkflow, setWorkflowId, navigate]);
 
   const handleSave = useCallback(async () => {
     if (nodes.length === 0) {
@@ -140,6 +144,8 @@ export const useWorkflowActions = ({
         
         if (newId) {
           setWorkflowId(newId);
+          // Navigate to the workflow URL so it persists on refresh
+          navigate(`/workflow/${newId}`);
           alert('✅ Workflow created! You can now execute it.');
         }
       }
@@ -149,7 +155,7 @@ export const useWorkflowActions = ({
     } finally {
       setIsSaving(false);
     }
-  }, [nodes, edges, workflowTitle, isWorkflowActive, workflowId, setIsSaving, setWorkflowId]);
+  }, [nodes, edges, workflowTitle, isWorkflowActive, workflowId, setIsSaving, setWorkflowId, navigate]);
 
   const handleExecute = useCallback(async () => {
     if (nodes.length === 0) {

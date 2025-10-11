@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GeminiParams } from "./nodeParams/GeminiParams";
 import { TelegramParams } from "./nodeParams/TelegramParams";
 import { EmailParams } from "./nodeParams/EmailParams";
@@ -7,12 +7,13 @@ import GenericParams from "./nodeParams/GenericParams";
 export function NodeParametersPanel({ node, onClose, onSave }: any) {
   const [localData, setLocalData] = useState(node.data || {});
   
-  console.log('📋 NodeParametersPanel opened for node:', node.id);
-  console.log('📋 Initial node data:', node.data);
-  console.log('📋 Local data state:', localData);
+  // Sync local data with node data only when the node ID changes (i.e., different node selected)
+  // This prevents resetting localData when parent re-renders but keeps the same node
+  useEffect(() => {
+    setLocalData(node.data || {});
+  }, [node.id]);
 
   const handleSave = () => {
-    console.log('💾 Saving node data:', localData);
     onSave(node.id, localData);
     onClose();
   };

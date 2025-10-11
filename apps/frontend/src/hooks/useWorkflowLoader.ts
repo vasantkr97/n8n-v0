@@ -24,15 +24,21 @@ export const useWorkflowLoader = ({
 
   useEffect(() => {
     const loadWorkflow = async () => {
-      if (!urlWorkflowId) return;
+      console.log('🔄 WorkflowLoader: URL workflow ID:', urlWorkflowId);
+      if (!urlWorkflowId) {
+        console.log('⚠️ No workflow ID in URL, skipping load');
+        return;
+      }
 
       try {
         setIsLoadingWorkflow(true);
+        console.log('📥 Loading workflow from backend:', urlWorkflowId);
         const response = await getWorkflowById(urlWorkflowId);
         
         const wf = response.data;
         if (!wf) return;
 
+        console.log('✅ Workflow loaded successfully:', wf);
         setWorkflowId(wf.id);
         setWorkflowTitle(wf.title || 'Untitled Workflow');
         setIsWorkflowActive(wf.isActive || false);
@@ -55,6 +61,7 @@ export const useWorkflowLoader = ({
               parameters: n.parameters || {},
               credentialsId: n.credentials?.id,
               workflowId: wf.id,
+              webhookToken: wf.webhookToken, // Add webhook token to node data
             },
           };
         });
@@ -67,6 +74,8 @@ export const useWorkflowLoader = ({
           data: { itemCount: 1 },
         }));
 
+        console.log('📋 Mapped nodes:', mappedNodes);
+        console.log('🔗 Mapped edges:', mappedEdges);
         setNodes(mappedNodes);
         setEdges(mappedEdges);
       } catch (error: any) {

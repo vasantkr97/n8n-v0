@@ -73,6 +73,65 @@ export const webhookExecute = async (req: Request, res: Response) => {
   }
 }
 
+// Public webhook endpoint with token authentication
+// Token can be passed as query param (?token=xxx) or header (X-Webhook-Token)
+export const publicWebhookExecute = async (req: Request, res: Response) => {
+  try {
+    const { workflowId } = req.params;
+    
+    // Get token from query parameter or header
+    const tokenFromQuery = req.query.token as string;
+    const tokenFromHeader = req.headers['x-webhook-token'] as string;
+    const providedToken = tokenFromQuery || tokenFromHeader;
+
+    console.log(`🔗 Public webhook triggered for workflow: ${workflowId}`);
+
+    if (!providedToken) {
+      return res.status(401).json({ 
+        success: false,
+        error: "Webhook token is required. Please provide token in query parameter (?token=xxx) or X-Webhook-Token header."
+      });
+    }
+
+    // Verify workflow exists, is active, and token matches
+    const workflow = await prisma.workflow.findFirst({
+      where: {
+        id: workflowId,
+        isActive: true, // Only allow execution if workflow is active
+        webhookToken: providedToken // Token must match
+      },
+    });
+
+    if (!workflow) {
+      console.log(`❌ Webhook authentication failed for workflow: ${workflowId}`);
+      return res.status(403).json({ 
+        success: false,
+        error: "Invalid webhook token or workflow not found/inactive. Please check your token and ensure the workflow is active."
+      });
+    }
+
+    console.log(`✅ Webhook authenticated for workflow: ${workflowId}`);
+
+    // Execute the workflow with the workflow owner's userId
+    const executionId = await executeWorkflow(workflowId, workflow.userId, "WEBHOOK");
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        executionId,
+        message: "Webhook executed successfully",
+        workflowId: workflowId
+      }
+    })
+  } catch (error: any) {
+    console.error('❌ Public webhook execution error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || "Failed to execute webhook"
+    })
+  }
+}
+
 export const getExecutionById = async (req: Request, res: Response) => {
   try {
   const { executionId }= req.params;

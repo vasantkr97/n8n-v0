@@ -1,5 +1,11 @@
 import { Request, Response} from "express";
 import { prisma } from "@n8n/db";
+import crypto from "crypto";
+
+// Generate a secure random webhook token
+function generateWebhookToken(): string {
+  return crypto.randomBytes(32).toString('hex'); // 64-character hex string
+}
 
 export const createWorkflow = async (req: Request, res: Response) => {
     try {
@@ -23,6 +29,9 @@ export const createWorkflow = async (req: Request, res: Response) => {
         console.log(`  - Connections: ${workflowConnections.length}`);
         console.log(`  - Connections data:`, JSON.stringify(workflowConnections, null, 2));
 
+        // Generate webhook token if trigger type is WEBHOOK
+        const webhookToken = triggerType === 'WEBHOOK' ? generateWebhookToken() : null;
+
         const workflow = await prisma.workflow.create({
             data: {
                 title,
@@ -31,6 +40,7 @@ export const createWorkflow = async (req: Request, res: Response) => {
                 userId,
                 nodes: workflowNodes,
                 connections: workflowConnections,
+                webhookToken,
             }
         });
 
@@ -185,7 +195,14 @@ export const updateWorkflow = async (req: Request, res: Response) => {
         const updateData: any = {};
         if (title !== undefined) updateData.title = title;
         if (isActive !== undefined) updateData.isActive = isActive;
-        if (triggerType !== undefined) updateData.triggerType = triggerType;
+        if (triggerType !== undefined) {
+            updateData.triggerType = triggerType;
+            // Generate webhook token if changing to WEBHOOK and doesn't have one
+            if (triggerType === 'WEBHOOK' && !existingWorkflow.webhookToken) {
+                updateData.webhookToken = generateWebhookToken();
+                console.log(`  - Generated new webhook token`);
+            }
+        }
         if (nodes !== undefined) updateData.nodes = Array.isArray(nodes) ? nodes : [];
         if (connections !== undefined) updateData.connections = Array.isArray(connections) ? connections : [];
         

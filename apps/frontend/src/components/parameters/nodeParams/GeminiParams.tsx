@@ -12,11 +12,8 @@ export function GeminiParams({ data, setData }: any) {
         <CredentialsSelector
           credentialType="gemini"
           selectedCredentialId={data.credentialsId}
-          onChange={(credentialId) => setData({ ...data, credentialsId })}
+          onChange={(credentialId) => setData({ ...data, credentialsId: credentialId })}
         />
-        <p className="text-xs text-gray-500 mt-1">
-          Select Gemini API credentials or create new ones in Credentials page
-        </p>
       </div>
 
       <div>

@@ -31,11 +31,6 @@ export const getWorkflowById = async (workflowId: string) => {
     return data;
 }
 
-export const manualExecute = async (workflowId: string) => {
-    const { data } = await axiosInstance.post(`/workflows/manual/run/${workflowId}`);
-    return data;
-}
-
 export const updateWorkflow = async (workflowId: string, workflowData: UpdateWorkflowData) => {
     const { data } = await axiosInstance.put(`/workflows/updateWorkflow/${workflowId}`, workflowData);
     return data;

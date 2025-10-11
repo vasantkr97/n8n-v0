@@ -15,8 +15,8 @@ import { useWorkflowLoader } from "../hooks/useWorkflowLoader";
 
 export default function WorkflowEditor() {
   const state = useWorkflowState();
-  const [selectedNode, setSelectedNode] = useState<any | null>(null);
-  const [showParametersPanel, setShowParametersPanel] = useState(false);
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    const [showParametersPanel, setShowParametersPanel] = useState(false);
   const [showNodeSelector, setShowNodeSelector] = useState(false);
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
 
@@ -49,6 +49,11 @@ export default function WorkflowEditor() {
     setIsLoadingWorkflow: state.setIsLoadingWorkflow
   });
 
+  // Always get the fresh node from the nodes array
+  const selectedNode = selectedNodeId 
+    ? state.nodes.find((n: any) => n.id === selectedNodeId) 
+    : null;
+
   const handlePaneClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     if (target.classList.contains('react-flow__pane')) {
@@ -77,8 +82,8 @@ export default function WorkflowEditor() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <WorkflowToolbar
+        <div className="h-full w-full flex flex-col">
+            <WorkflowToolbar
         workflowTitle={state.workflowTitle}
         onWorkflowTitleChange={actions.handleTitleChange}
         onSaveWorkflow={actions.handleSave}
@@ -92,34 +97,34 @@ export default function WorkflowEditor() {
       />
       
       <div className="flex-1">
-        <ReactFlow
+                <ReactFlow
           nodes={state.nodes}
           edges={state.edges}
           onNodesChange={state.onNodesChange}
           onEdgesChange={state.onEdgesChange}
           onConnect={nodeActions.onConnect}
-          onNodeClick={(_event, node) => {
-            setSelectedNode(node);
-            setShowParametersPanel(true);
-          }}
+                    onNodeClick={(_event, node: any) => {
+                        setSelectedNodeId(node.id);
+                        setShowParametersPanel(true);
+                    }}
           onPaneClick={handlePaneClick}
-          nodeTypes={nodeTypes as any}
-          edgeTypes={edgeTypes as any}
-          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-          minZoom={0.1}
-          maxZoom={4}
-          deleteKeyCode={['Backspace', 'Delete']}
-          panOnDrag={true}
-          nodesDraggable={true}
-          nodesConnectable={true}
+                    nodeTypes={nodeTypes as any}
+                    edgeTypes={edgeTypes as any}
+                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                    minZoom={0.1}
+                    maxZoom={4}
+                    deleteKeyCode={['Backspace', 'Delete']}
+                    panOnDrag={true}
+                    nodesDraggable={true}
+                    nodesConnectable={true}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} style={{ backgroundColor: '#000000' }} />
           <Controls position="bottom-left" />
-          <MiniMap
-            nodeColor={(node) => {
-              if ((node.data as any)?.hasError) return '#ff6b6b';
-              if ((node.data as any)?.isSuccess) return '#51cf66';
-              if ((node.data as any)?.isExecuting) return '#339af0';
+                    <MiniMap
+                        nodeColor={(node) => {
+                            if ((node.data as any)?.hasError) return '#ff6b6b';
+                            if ((node.data as any)?.isSuccess) return '#51cf66';
+                            if ((node.data as any)?.isExecuting) return '#339af0';
               return '#9ca3af';
             }}
             position="bottom-right"
@@ -140,8 +145,8 @@ export default function WorkflowEditor() {
               </div>
             </div>
           )}
-        </ReactFlow>
-      </div>
+                </ReactFlow>
+            </div>
 
       <button
         onClick={handleAddNodeClick}
@@ -161,16 +166,16 @@ export default function WorkflowEditor() {
         hasTrigger={state.nodes.some((n: any) => n?.data?.isTrigger === true)}
       />
 
-      {showParametersPanel && selectedNode && (
-        <NodeParametersPanel
-          node={selectedNode}
+            {showParametersPanel && selectedNode && (
+                <NodeParametersPanel
+                    node={selectedNode}
           onClose={() => {
             setShowParametersPanel(false);
-            setSelectedNode(null);
+            setSelectedNodeId(null);
           }}
           onSave={nodeActions.handleUpdateNodeData}
-        />
-      )}
-    </div>
-  );
+                />
+            )}
+        </div>
+    );
 }

@@ -32,7 +32,7 @@ export const postCredentials = async (req: AuthRequest, res:Response) => {
 
         return res.status(201).json({
             msg:"Credentials created Successfully",
-            credentials,
+            data: credentials,
         })
 
     } catch (error) {
