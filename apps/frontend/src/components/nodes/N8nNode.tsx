@@ -36,13 +36,13 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
     <div className="relative group">
       {/* Node Container - Half-round for triggers, square for actions */}
       <div
-        className={`relative bg-gray-800 w-28 h-24 border-2 transition-all duration-300 flex items-center justify-center ${
+        className={`relative bg-gradient-to-br from-gray-700 to-gray-800 w-28 h-24 border-2 transition-all duration-300 flex items-center justify-center ${
           isTrigger ? 'rounded-l-full rounded-r-lg' : 'rounded-lg'
         } ${
           selected
-            ? 'border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-105'
+            ? 'border-orange-400 shadow-[0_0_20px_rgba(251,146,60,0.6)] scale-105'
             : 'border-gray-600 shadow-[0_4px_12px_rgba(0,0,0,0.4)]'
-        } hover:border-gray-400 hover:shadow-[0_6px_16px_rgba(0,0,0,0.6)] hover:scale-102`}
+        } hover:border-gray-500 hover:shadow-[0_6px_16px_rgba(0,0,0,0.5)] hover:scale-102`}
       >
         {/* Input Handle - left edge center (not for triggers) */}
         {!isTrigger && (
@@ -50,8 +50,8 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
             type="target"
             position={Position.Left}
             className="absolute top-1/2 -translate-y-1/2 -left-2
-                       bg-gray-700 border-2 border-gray-500 w-3 h-3 rounded-full
-                       hover:scale-125 hover:border-blue-400 transition-all duration-200 hover:bg-gray-600"
+                       bg-gray-600 border-2 border-gray-500 w-3 h-3 rounded-full
+                       hover:scale-125 hover:border-orange-400 transition-all duration-200 hover:bg-gray-500"
           />
         )}
 
@@ -60,8 +60,8 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
           type="source"
           position={Position.Right}
           className="absolute top-1/2 -translate-y-1/2 -right-2
-                     bg-gray-700 border-2 border-gray-500 w-2 h-2
-                     hover:scale-125 hover:border-blue-400 transition-all duration-200 hover:bg-gray-600"
+                     bg-gray-600 border-2 border-gray-500 w-3 h-3 rounded-full
+                     hover:scale-125 hover:border-orange-400 transition-all duration-200 hover:bg-gray-500"
         />
 
 
@@ -79,7 +79,7 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
         )}
 
         {/* Large Icon in Center */}
-        <span className="text-3xl" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
+        <span className="text-4xl" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
           {getStatusIcon()}
         </span>
       </div>
