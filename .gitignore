@@ -36,3 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Documentation (temporary guide files)
+*.md
+!README.md

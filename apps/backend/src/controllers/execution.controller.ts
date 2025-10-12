@@ -97,9 +97,9 @@ export const publicWebhookExecute = async (req: Request, res: Response) => {
     const workflow = await prisma.workflow.findFirst({
       where: {
         id: workflowId,
-        isActive: true, // Only allow execution if workflow is active
-        webhookToken: providedToken // Token must match
-      },
+        isActive: true,
+        webhookToken: providedToken
+      } as any,
     });
 
     if (!workflow) {

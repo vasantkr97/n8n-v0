@@ -1,11 +1,9 @@
 import {
   type EdgeProps,
-  getSmoothStepPath,
+  getBezierPath,
   EdgeLabelRenderer,
   BaseEdge,
 } from '@xyflow/react';
-
-// Interface moved to edgeTypes.ts for better organization
 
 const N8nEdge = ({
   sourceX,
@@ -19,35 +17,43 @@ const N8nEdge = ({
   markerEnd,
   selected,
 }: EdgeProps) => {
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
+  const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
     targetPosition,
-    borderRadius: 8,
   });
 
   const getEdgeColor = () => {
-    if ((data as any)?.hasError) return '#ff6b6b';
-    if ((data as any)?.hasExecuted) return '#51cf66';
-    if ((data as any)?.isExecuting) return '#339af0';
-    return selected ? '#007acc' : '#9ca3af';
+    if ((data as any)?.hasError) return '#ef4444';
+    if ((data as any)?.hasExecuted) return '#10b981';
+    if ((data as any)?.isExecuting) return '#3b82f6';
+    return selected ? '#6366f1' : '#64748b';
   };
 
   const getEdgeWidth = () => {
-    if ((data as any)?.isExecuting) return 3;
-    if (selected) return 2.5;
-    return 2;
+    if ((data as any)?.isExecuting) return 3.5;
+    if (selected) return 3;
+    return 2.5;
+  };
+
+  const getEdgeOpacity = () => {
+    if ((data as any)?.isExecuting) return 1;
+    if (selected) return 0.9;
+    return 0.7;
   };
 
   const edgeStyle = {
     ...style,
     stroke: getEdgeColor(),
     strokeWidth: getEdgeWidth(),
-    strokeDasharray: (data as any)?.isExecuting ? '5,5' : 'none',
-    animation: (data as any)?.isExecuting ? 'n8n-edge-flow 1s linear infinite' : 'none',
+    strokeOpacity: getEdgeOpacity(),
+    strokeDasharray: (data as any)?.isExecuting ? '8,4' : 'none',
+    filter: selected ? 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.4))' : 
+            (data as any)?.isExecuting ? 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.3))' : 'none',
+    animation: (data as any)?.isExecuting ? 'n8n-edge-flow 1.5s ease-in-out infinite' : 'none',
   };
 
   return (
@@ -71,41 +77,24 @@ const N8nEdge = ({
           }}
           className="nodrag nopan"
         >
-          {/* Item Count Badge */}
-          {(data as any)?.itemCount !== undefined && (data as any).itemCount > 0 && (
-            <div
-              style={{
-                backgroundColor: getEdgeColor(),
-                color: '#fff',
-                padding: '2px 6px',
-                borderRadius: '10px',
-                fontSize: '10px',
-                fontWeight: '600',
-                minWidth: '18px',
-                textAlign: 'center',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                marginBottom: '4px'
-              }}
-            >
-              {(data as any).itemCount}
-            </div>
-          )}
           
           {/* Edge Label */}
           {(data as any)?.label && (
             <div
               style={{
-                backgroundColor: '#fff',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                border: `1px solid ${getEdgeColor()}`,
+                background: 'rgba(15, 23, 42, 0.95)',
+                backdropFilter: 'blur(12px)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${getEdgeColor()}40`,
                 fontSize: '11px',
-                color: '#374151',
+                color: '#f1f5f9',
                 fontWeight: '500',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                maxWidth: '120px',
+                boxShadow: `0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px ${getEdgeColor()}20`,
+                maxWidth: '140px',
                 textAlign: 'center',
-                wordBreak: 'break-word'
+                wordBreak: 'break-word',
+                letterSpacing: '0.025em'
               }}
             >
               {(data as any).label}
@@ -116,14 +105,17 @@ const N8nEdge = ({
           {(data as any)?.isExecuting && (
             <div
               style={{
-                backgroundColor: '#339af0',
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
                 color: '#fff',
-                padding: '2px 6px',
-                borderRadius: '4px',
+                padding: '4px 10px',
+                borderRadius: '8px',
                 fontSize: '10px',
                 fontWeight: '600',
-                marginTop: '4px',
-                animation: 'pulse 1.5s ease-in-out infinite alternate'
+                marginTop: '6px',
+                animation: 'n8n-status-pulse 2s ease-in-out infinite',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                backdropFilter: 'blur(8px)'
               }}
             >
               Processing...
@@ -135,17 +127,31 @@ const N8nEdge = ({
       {/* CSS for animations */}
       <style>{`
         @keyframes n8n-edge-flow {
-          to {
-            stroke-dashoffset: -10;
+          0% {
+            stroke-dashoffset: 0;
+          }
+          100% {
+            stroke-dashoffset: -12;
           }
         }
         
-        @keyframes pulse {
-          from {
+        @keyframes n8n-status-pulse {
+          0%, 100% {
             opacity: 1;
+            transform: scale(1);
           }
-          to {
-            opacity: 0.6;
+          50% {
+            opacity: 0.8;
+            transform: scale(1.02);
+          }
+        }
+        
+        @keyframes n8n-edge-glow {
+          0%, 100% {
+            filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.3));
+          }
+          50% {
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
           }
         }
       `}</style>

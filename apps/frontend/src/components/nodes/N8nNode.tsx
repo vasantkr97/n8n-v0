@@ -5,13 +5,6 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 const N8nNode = memo(({ data, selected }: NodeProps) => {
   const [showWebhookUrl, setShowWebhookUrl] = useState(false);
   
-  // Determine node color based on its state
-  const getNodeColor = () => {
-    if (data?.hasError) return '#ff6b6b'; // Red for error
-    if (data?.isSuccess) return '#51cf66'; // Green for success
-    if (data?.isExecuting) return '#339af0'; // Blue for executing
-    return (data as any)?.color || '#868e96'; // Default gray
-  };
 
   // Determine icon to show based on state
   const getStatusIcon = () => {
@@ -43,7 +36,7 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
     <div className="relative group">
       {/* Node Container - Half-round for triggers, square for actions */}
       <div
-        className={`relative bg-gray-800 w-32 h-28 border-2 transition-all duration-300 flex items-center justify-center ${
+        className={`relative bg-gray-800 w-28 h-24 border-2 transition-all duration-300 flex items-center justify-center ${
           isTrigger ? 'rounded-l-full rounded-r-lg' : 'rounded-lg'
         } ${
           selected
@@ -71,15 +64,6 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
                      hover:scale-125 hover:border-blue-400 transition-all duration-200 hover:bg-gray-600"
         />
 
-        {/* Status Indicator Circle (top-right corner) */}
-        <div
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center border-2 border-gray-800 shadow-lg"
-          style={{ backgroundColor: getNodeColor() }}
-        >
-          {(data as any)?.isExecuting && (
-            <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin" />
-          )}
-        </div>
 
         {/* Webhook URL Button (only for webhook nodes) */}
         {webhookUrl && (
@@ -101,7 +85,7 @@ const N8nNode = memo(({ data, selected }: NodeProps) => {
       </div>
 
       {/* Text Below Node */}
-      <div className="mt-2 flex flex-col items-center text-center max-w-32 mx-auto">
+      <div className="mt-2 flex flex-col items-center text-center max-w-28 mx-auto">
         <div className="text-xs font-medium text-gray-200 leading-tight truncate w-full">
           {(data as any)?.label}
         </div>

@@ -15,10 +15,9 @@ import { useWorkflowLoader } from "../hooks/useWorkflowLoader";
 
 export default function WorkflowEditor() {
   const state = useWorkflowState();
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [showParametersPanel, setShowParametersPanel] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [showParametersPanel, setShowParametersPanel] = useState(false);
   const [showNodeSelector, setShowNodeSelector] = useState(false);
-  const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
 
   const actions = useWorkflowActions({
     workflowId: state.workflowId,
@@ -54,110 +53,135 @@ export default function WorkflowEditor() {
     ? state.nodes.find((n: any) => n.id === selectedNodeId) 
     : null;
 
-  const handlePaneClick = (event: React.MouseEvent) => {
-    const target = event.target as HTMLElement;
-    if (target.classList.contains('react-flow__pane')) {
-      setNodeSelectorPosition({
-        x: event.clientX - 190,
-        y: event.clientY - 225
-      });
-      setShowNodeSelector(true);
-    }
-  };
-
   const handleAddNodeClick = () => {
-    setNodeSelectorPosition({
-      x: window.innerWidth / 2 - 190,
-      y: window.innerHeight / 2 - 225
-    });
     setShowNodeSelector(true);
   };
 
   if (state.isLoadingWorkflow) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-black">
-        <div className="text-white text-lg">Loading workflow...</div>
+      <div className="h-full w-full flex items-center justify-center bg-gray-950">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-orange-500/50 animate-pulse">
+            <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 4h3v7H8V4zm5 0h3v10h-3V4zM8 13h3v7H8v-7z"/>
+            </svg>
+          </div>
+          <p className="text-white text-lg font-semibold">Loading workflow...</p>
+          <p className="text-gray-400 text-sm mt-2">Please wait</p>
+        </div>
       </div>
     );
   }
 
   return (
-        <div className="h-full w-full flex flex-col">
-            <WorkflowToolbar
+    <div className="h-full w-full flex flex-col bg-gray-950">
+      <WorkflowToolbar
         workflowTitle={state.workflowTitle}
         onWorkflowTitleChange={actions.handleTitleChange}
         onSaveWorkflow={actions.handleSave}
         onNewWorkflow={actions.handleNewWorkflow}
         onExecuteWorkflow={actions.handleExecute}
-        onWebhookExecute={actions.handleWebhookExecute}
         isWorkflowActive={state.isWorkflowActive}
         onToggleActive={actions.handleToggleActive}
         isSaving={state.isSaving}
         isExecuting={state.isExecuting}
       />
       
-      <div className="flex-1">
-                <ReactFlow
+      <div className="flex-1 relative">
+        {/* Minimalistic Add Node Button - Top Right */}
+        <button
+          onClick={handleAddNodeClick}
+          className="absolute top-4 right-4 z-20 w-8 h-8 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-gray-400 hover:text-white rounded-lg flex items-center justify-center transition-all"
+          title="Add node"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+
+        <ReactFlow
           nodes={state.nodes}
           edges={state.edges}
           onNodesChange={state.onNodesChange}
           onEdgesChange={state.onEdgesChange}
           onConnect={nodeActions.onConnect}
-                    onNodeClick={(_event, node: any) => {
-                        setSelectedNodeId(node.id);
-                        setShowParametersPanel(true);
-                    }}
-          onPaneClick={handlePaneClick}
-                    nodeTypes={nodeTypes as any}
-                    edgeTypes={edgeTypes as any}
-                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                    minZoom={0.1}
-                    maxZoom={4}
-                    deleteKeyCode={['Backspace', 'Delete']}
-                    panOnDrag={true}
-                    nodesDraggable={true}
-                    nodesConnectable={true}
+          onNodeClick={(_event, node: any) => {
+            setSelectedNodeId(node.id);
+            setShowParametersPanel(true);
+          }}
+          nodeTypes={nodeTypes as any}
+          edgeTypes={edgeTypes as any}
+          defaultEdgeOptions={{
+            type: 'smooth',
+            animated: false,
+            style: {
+              strokeWidth: 2.5,
+              strokeOpacity: 0.8,
+            },
+          }}
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          minZoom={0.1}
+          maxZoom={4}
+          deleteKeyCode={['Backspace', 'Delete']}
+          panOnDrag={true}
+          nodesDraggable={true}
+          nodesConnectable={true}
         >
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} style={{ backgroundColor: '#000000' }} />
-          <Controls position="bottom-left" />
-                    <MiniMap
-                        nodeColor={(node) => {
-                            if ((node.data as any)?.hasError) return '#ff6b6b';
-                            if ((node.data as any)?.isSuccess) return '#51cf66';
-                            if ((node.data as any)?.isExecuting) return '#339af0';
-              return '#9ca3af';
+          <Background 
+            variant={BackgroundVariant.Dots} 
+            gap={20} 
+            size={1} 
+            style={{ backgroundColor: '#0a0e1a' }} 
+          />
+          <Controls 
+            position="bottom-left"
+            style={{ 
+              display: 'flex',
+              gap: '8px',
+            }}
+            className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-2"
+          />
+          <MiniMap
+            nodeColor={(node) => {
+              if ((node.data as any)?.hasError) return '#ef4444';
+              if ((node.data as any)?.isSuccess) return '#10b981';
+              if ((node.data as any)?.isExecuting) return '#3b82f6';
+              return '#6b7280';
             }}
             position="bottom-right"
-            style={{ height: 120, width: 180, backgroundColor: '#000000', border: '1px solid #4b5563', borderRadius: '8px' }}
+            style={{ 
+              height: 140, 
+              width: 200, 
+              backgroundColor: '#1f2937', 
+              border: '1px solid #374151', 
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+            }}
+            className="backdrop-blur-sm"
           />
           
+          {/* Empty State - Start Card */}
           {state.nodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div className="text-center bg-gray-800 bg-opacity-90 p-8 rounded-lg border-2 border-dashed border-gray-600">
-                <div className="text-6xl mb-4">🎨</div>
-                <h3 className="text-xl font-semibold text-white mb-2">Start Building</h3>
-                <p className="text-gray-400 mb-4">Add your first node to get started</p>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <div>Click the <span className="bg-blue-600 px-2 py-1 rounded">+</span> button</div>
-                  <div className="text-gray-400">or</div>
-                  <div>Click anywhere on canvas</div>
+              <div className="text-center">
+                <div className="inline-block bg-gray-900 border border-gray-800 rounded-lg p-6 pointer-events-auto cursor-pointer hover:border-blue-500/50 transition-all" onClick={handleAddNodeClick}>
+                  <div className="w-12 h-12 mx-auto mb-3 bg-blue-600/10 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-sm font-medium text-white mb-1">Add first node</h3>
+                  <p className="text-xs text-gray-500">Click to start</p>
                 </div>
               </div>
             </div>
           )}
-                </ReactFlow>
-            </div>
+        </ReactFlow>
+      </div>
 
-      <button
-        onClick={handleAddNodeClick}
-        className="fixed bottom-8 right-8 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl font-bold z-30 transition-all hover:scale-110"
-      >
-        +
-      </button>
-
+      {/* Side Panel for Node Selection */}
       <NodeSelector
         isVisible={showNodeSelector}
-        position={nodeSelectorPosition}
         onNodeSelect={(nodeType) => {
           nodeActions.handleNodeSelect(nodeType);
           setShowNodeSelector(false);
@@ -166,16 +190,17 @@ export default function WorkflowEditor() {
         hasTrigger={state.nodes.some((n: any) => n?.data?.isTrigger === true)}
       />
 
-            {showParametersPanel && selectedNode && (
-                <NodeParametersPanel
-                    node={selectedNode}
+      {/* Parameters Panel */}
+      {showParametersPanel && selectedNode && (
+        <NodeParametersPanel
+          node={selectedNode}
           onClose={() => {
             setShowParametersPanel(false);
             setSelectedNodeId(null);
           }}
           onSave={nodeActions.handleUpdateNodeData}
-                />
-            )}
-        </div>
-    );
+        />
+      )}
+    </div>
+  );
 }

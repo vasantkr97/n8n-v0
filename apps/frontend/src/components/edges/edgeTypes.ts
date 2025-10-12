@@ -6,6 +6,8 @@ export const edgeTypes = {
   'default': N8nEdge,
   'smoothstep': N8nEdge,
   'straight': N8nEdge,
+  'smooth': N8nEdge,
+  'step': N8nEdge,
 };
 
 // Helper function to create n8n-style edge data
@@ -28,14 +30,15 @@ export const createN8nEdge = (
   animated: data?.isExecuting || false,
   data: data || {},
   style: {
-    strokeWidth: 2,
+    strokeWidth: 2.5,
+    strokeOpacity: 0.8,
   },
   markerEnd: {
     type: 'arrowclosed' as const,
-    width: 20,
-    height: 20,
-    color: data?.hasError ? '#ff6b6b' : 
-          data?.hasExecuted ? '#51cf66' : 
-          data?.isExecuting ? '#339af0' : '#9ca3af',
+    width: 16,
+    height: 16,
+    color: data?.hasError ? '#ef4444' : 
+          data?.hasExecuted ? '#10b981' : 
+          data?.isExecuting ? '#3b82f6' : '#64748b',
   },
 });

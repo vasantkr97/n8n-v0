@@ -198,7 +198,7 @@ export const updateWorkflow = async (req: Request, res: Response) => {
         if (triggerType !== undefined) {
             updateData.triggerType = triggerType;
             // Generate webhook token if changing to WEBHOOK and doesn't have one
-            if (triggerType === 'WEBHOOK' && !existingWorkflow.webhookToken) {
+            if (triggerType === 'WEBHOOK' && !(existingWorkflow as any).webhookToken) {
                 updateData.webhookToken = generateWebhookToken();
                 console.log(`  - Generated new webhook token`);
             }
@@ -262,4 +262,6 @@ export const deleteWorkflow = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Internal server error while deleting workflow"})
     }
 };
+
+
 

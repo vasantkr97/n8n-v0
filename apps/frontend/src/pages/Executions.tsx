@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllExecutions, deleteExecution, stopExecution } from '../apiServices/execution.api';
 import ExecutionDetailsModal from '../components/ExecutionDetailsModal';
+import { Badge, Button, Spinner, TableRowSkeleton } from '../components/ui';
 
 interface Execution {
   id: string;
@@ -81,13 +82,13 @@ export default function Executions() {
     navigate(`/workflow/${workflowId}`);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'error' | 'info' | 'warning' | 'default' => {
     switch (status) {
-      case 'SUCCESS': return 'bg-green-700 text-green-100';
-      case 'FAILED': return 'bg-red-700 text-red-100';
-      case 'RUNNING': return 'bg-blue-700 text-blue-100';
-      case 'PENDING': return 'bg-yellow-700 text-yellow-100';
-      default: return 'bg-gray-700 text-gray-300';
+      case 'SUCCESS': return 'success';
+      case 'FAILED': return 'error';
+      case 'RUNNING': return 'info';
+      case 'PENDING': return 'warning';
+      default: return 'default';
     }
   };
 
@@ -119,172 +120,219 @@ export default function Executions() {
 
   if (isLoading && executions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-900">
-        <div className="text-lg text-white">Loading executions...</div>
+      <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-950 to-gray-900">
+        <Spinner size="lg" text="Loading executions..." />
       </div>
     );
   }
 
   if (error && executions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-gray-900">
-        <div className="text-red-400 text-lg mb-4">Error: {error}</div>
-        <button
-          onClick={fetchExecutions}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Retry
-        </button>
+      <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-gray-950 to-gray-900">
+        <div className="text-center animate-fadeIn">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-2xl flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-white mb-2">Failed to load executions</h3>
+          <p className="text-red-400 mb-6">{error}</p>
+          <Button onClick={fetchExecutions} variant="primary">
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-gray-900 text-white overflow-auto">
-      {/* Header */}
-      <div className="bg-gray-950 border-b border-gray-700 px-6 py-4 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-white">Executions</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              View and manage workflow executions
-            </p>
-          </div>
-          
-          {/* Filters */}
-          <div className="flex items-center space-x-4">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="RUNNING">Running</option>
-              <option value="SUCCESS">Success</option>
-              <option value="FAILED">Failed</option>
-            </select>
-            <button
+    <div className="h-full bg-gray-950 text-white overflow-auto">
+      {/* Simple Header */}
+      <div className="sticky top-0 z-10 border-b border-gray-800/50 px-6 py-4 bg-gray-950">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-xl font-medium text-white">Executions</h1>
+              <p className="text-xs text-gray-500 mt-0.5">{executions.length} total</p>
+            </div>
+
+            <Button
               onClick={fetchExecutions}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm text-white hover:bg-gray-700"
+              variant="outline"
+              size="sm"
+              leftIcon={
+                isLoading ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )
+              }
             >
               Refresh
-            </button>
+            </Button>
+          </div>
+
+          {/* Filters */}
+          <div className="flex items-center gap-1.5">
+            {[
+              { value: '', label: 'All' },
+              { value: 'PENDING', label: 'Pending' },
+              { value: 'RUNNING', label: 'Running' },
+              { value: 'SUCCESS', label: 'Success' },
+              { value: 'FAILED', label: 'Failed' },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setStatusFilter(filter.value)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  statusFilter === filter.value
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-900/50 text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="px-6 py-6">
-        {filteredExecutions.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-600 text-6xl mb-4">📊</div>
-            <h3 className="text-lg font-medium text-white mb-2">No executions found</h3>
-            <p className="text-gray-400">
-              {statusFilter 
-                ? `No executions found with status "${statusFilter}"`
-                : "Execute a workflow to see executions here"
-              }
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Executions Table */}
-            <div className="bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-700">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-900">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Workflow
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Mode
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Started
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Duration
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-700">
-                  {filteredExecutions.map((execution: Execution) => (
-                    <tr key={execution.id} className="hover:bg-gray-750 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div>
-                            <div className="text-sm font-medium text-white">
-                              {execution.workflow.title}
-                            </div>
-                            <div className="text-sm text-gray-400">
-                              {execution.workflow.triggerType}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(execution.status)}`}>
-                          {execution.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {execution.mode}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        {formatDate(execution.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        {getDuration(execution.createdAt, execution.finishedAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                        <button
-                          className="text-purple-400 hover:text-purple-300"
-                          onClick={() => setSelectedExecutionId(execution.id)}
-                          title="View execution details and results"
-                        >
-                          Details
-                        </button>
-                        <button
-                          className="text-blue-400 hover:text-blue-300"
-                          onClick={() => handleViewWorkflow(execution.workflow.id)}
-                        >
-                          View Workflow
-                        </button>
-                        {execution.status === 'RUNNING' && (
-                          <button
-                            className="text-yellow-400 hover:text-yellow-300"
-                            onClick={() => handleCancelExecution(execution.id)}
+        <div className="max-w-6xl mx-auto">
+          {filteredExecutions.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-gray-500 mb-4">
+                {statusFilter 
+                  ? `No executions with status "${statusFilter}"`
+                  : "No executions yet"
+                }
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Executions Table */}
+              <div className="bg-gray-900/40 rounded-lg overflow-hidden border border-gray-800">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-800">
+                    <thead>
+                      <tr className="bg-gray-900/30">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
+                          Workflow
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
+                          Started
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
+                          Duration
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800/50">
+                      {isLoading && executions.length > 0 ? (
+                        <>
+                          {[1, 2, 3].map((i) => <TableRowSkeleton key={i} columns={5} />)}
+                        </>
+                      ) : (
+                        filteredExecutions.map((execution: Execution) => (
+                          <tr 
+                            key={execution.id} 
+                            className="hover:bg-gray-800/30 transition-colors"
                           >
-                            Cancel
-                          </button>
-                        )}
-                        <button
-                          className="text-red-400 hover:text-red-300"
-                          onClick={() => handleDeleteExecution(execution.id)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Summary */}
-            <div className="mt-4 text-sm text-gray-400">
-              Showing {filteredExecutions.length} of {executions.length} executions
-              {isLoading && <span className="ml-2">(refreshing...)</span>}
-            </div>
-          </>
-        )}
+                            <td className="px-4 py-3">
+                              <div className="text-sm font-medium text-white">
+                                {execution.workflow.title}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                {execution.workflow.triggerType}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant={getStatusVariant(execution.status)} size="sm" dot={execution.status === 'RUNNING'}>
+                                {execution.status}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="text-sm text-gray-300">
+                                {formatDate(execution.createdAt)}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-mono text-gray-400">
+                                {getDuration(execution.createdAt, execution.finishedAt)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  onClick={() => setSelectedExecutionId(execution.id)}
+                                  variant="ghost"
+                                  size="xs"
+                                  className="text-blue-400 hover:text-blue-300"
+                                  title="View details"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                </Button>
+                                <Button
+                                  onClick={() => handleViewWorkflow(execution.workflow.id)}
+                                  variant="ghost"
+                                  size="xs"
+                                  className="text-purple-400 hover:text-purple-300"
+                                  title="View workflow"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                  </svg>
+                                </Button>
+                                {execution.status === 'RUNNING' && (
+                                  <Button
+                                    onClick={() => handleCancelExecution(execution.id)}
+                                    variant="ghost"
+                                    size="xs"
+                                    className="text-yellow-400 hover:text-yellow-300"
+                                    title="Cancel"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </Button>
+                                )}
+                                <Button
+                                  onClick={() => handleDeleteExecution(execution.id)}
+                                  variant="ghost"
+                                  size="xs"
+                                  className="text-red-400 hover:text-red-300"
+                                  title="Delete"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Execution Details Modal */}

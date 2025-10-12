@@ -1,14 +1,17 @@
 import AgentNode from './AgentNode';
 import N8nNode from './N8nNode';
+import TelegramNode from './TelegramNode';
+import EmailNode from './EmailNode';
+import GeminiAgentNode from './GeminiAgentNode';
 
 // Define all custom node types for n8n-style workflow
 export const nodeTypes = {
   'n8n-node': N8nNode,
   manual: N8nNode,
   webhook: N8nNode,
-  email: N8nNode,
-  telegram: N8nNode,
-  gemini: N8nNode, // Use AgentNode for gemini nodes
+  email: EmailNode,
+  telegram: TelegramNode,
+  gemini: GeminiAgentNode,
   // Add trigger flags to node configs for proper rendering
 };
 
@@ -72,10 +75,10 @@ export const nodeConfigs = {
     isTrigger: false,
   },
   gemini: {
-    icon: '✨',
-    color: '#6f42c1',
-    label: 'Gemini Agent',
-    description: 'Use Gemini LLM to generate responses',
+    icon: '🤖',
+    color: '#8b5cf6',
+    label: 'Gemini AI',
+    description: 'AI agent with multiple outputs',
     isTrigger: false,
   },
 };

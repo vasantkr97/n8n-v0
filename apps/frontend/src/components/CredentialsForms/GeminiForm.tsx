@@ -56,50 +56,47 @@ export function GeminiCredentials() {
 
   if (isLoading) {
     return (
-      <section className="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <div className="flex items-center">
-          <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full mr-2"></div>
-          <p className="text-gray-400">Loading Gemini credentials...</p>
-        </div>
-      </section>
+      <div className="flex items-center gap-2 py-2">
+        <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+        <p className="text-sm text-gray-400">Loading...</p>
+      </div>
     );
   }
 
   return (
-    <section className="bg-gray-800 rounded-xl p-6 shadow-lg">
-      <div className="flex items-center mb-4">
-        <span className="text-2xl mr-2">✨</span>
-        <h2 className="text-xl font-bold">Gemini AI Credentials</h2>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div>
+      <div className="grid gap-2 md:grid-cols-2">
         {credentials?.map((cred: any) => (
           <div
             key={cred.id}
-            className="bg-gray-700 rounded-lg p-4 flex justify-between items-start hover:bg-gray-650 transition-colors border border-gray-600"
+            className="bg-gray-800/50 rounded-lg px-3 py-2.5 flex justify-between items-center hover:bg-gray-800 transition-colors border border-gray-700/50"
           >
-            <div className="flex-1">
-              <h3 className="font-semibold text-white">{cred.title}</h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Created: {new Date(cred.createdAt).toLocaleDateString()}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-white truncate">{cred.title}</h3>
+              <p className="text-xs text-gray-500">
+                {new Date(cred.createdAt).toLocaleDateString()}
               </p>
             </div>
             <button
               onClick={() => deleteMutation.mutate(cred.id)}
-              className="text-gray-400 hover:text-red-400 transition-colors ml-2 p-1"
-              title="Delete credential"
+              className="text-gray-500 hover:text-red-400 transition-colors ml-2 p-1"
+              title="Delete"
             >
-              🗑️
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
         ))}
 
         <button
           onClick={() => setShowForm(true)}
-          className="px-4 py-4 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium border-2 border-dashed border-blue-500 hover:border-blue-400"
+          className="px-3 py-2.5 bg-blue-600/10 rounded-lg hover:bg-blue-600/20 transition-colors flex items-center justify-center text-sm font-medium text-blue-400 border border-dashed border-blue-600/30 hover:border-blue-600/50"
         >
-          <span className="text-xl mr-2">+</span>
-          Add Gemini Credential
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Key
         </button>
       </div>
 
@@ -161,6 +158,6 @@ export function GeminiCredentials() {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, Badge } from './ui';
 
 interface WorkflowToolbarProps {
   workflowTitle: string;
@@ -6,7 +7,6 @@ interface WorkflowToolbarProps {
   onSaveWorkflow: () => void;
   onNewWorkflow: () => void;
   onExecuteWorkflow: () => void;
-  onWebhookExecute?: () => void;
   isWorkflowActive: boolean;
   onToggleActive: () => void;
   isSaving: boolean;
@@ -19,7 +19,6 @@ export const WorkflowToolbar = ({
   onSaveWorkflow,
   onNewWorkflow,
   onExecuteWorkflow,
-  onWebhookExecute,
   isWorkflowActive,
   onToggleActive,
   isSaving,
@@ -42,115 +41,91 @@ export const WorkflowToolbar = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-2 bg-gray-950 border-b border-gray-700 shadow-md">
-      {/* Left side - Title and controls */}
-      <div className="flex items-center space-x-4">
-        {/* Workflow Title */}
-        <div className="flex items-center space-x-2">
-          {isEditingTitle ? (
-            <input
-              type="text"
-              value={tempTitle}
-              onChange={(e) => setTempTitle(e.target.value)}
-              onBlur={handleTitleSubmit}
-              onKeyDown={handleTitleKeyDown}
-              className="text-xl font-semibold bg-gray-800 text-white border-b-2 border-blue-500 focus:outline-none  px-1 py-0.5"
-              autoFocus
-            />
-          ) : (
-            <h1
-              className="text-base font-semibold text-white cursor-pointer hover:text-blue-400 transition-colors"
-              onClick={() => setIsEditingTitle(true)}
-              title="Click to edit workflow name"
+    <div className="glass-effect border-b border-gray-800 px-4 py-2.5 backdrop-blur-xl">
+      <div className="flex items-center justify-between">
+        {/* Left side - Title and status */}
+        <div className="flex items-center gap-3">
+          {/* Workflow Icon - Smaller */}
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+
+          {/* Workflow Title - Compact */}
+          <div className="flex items-center gap-3">
+            {isEditingTitle ? (
+              <input
+                type="text"
+                value={tempTitle}
+                onChange={(e) => setTempTitle(e.target.value)}
+                onBlur={handleTitleSubmit}
+                onKeyDown={handleTitleKeyDown}
+                className="text-base font-semibold bg-gray-800 text-white border-b border-blue-500 focus:outline-none px-2 py-0.5 rounded"
+                autoFocus
+              />
+            ) : (
+              <h1
+                className="text-base font-semibold text-white cursor-pointer hover:text-blue-400 transition-colors flex items-center gap-1.5 group"
+                onClick={() => setIsEditingTitle(true)}
+                title="Click to edit"
+              >
+                {workflowTitle || 'Untitled'}
+                <svg className="w-3 h-3 text-gray-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </h1>
+            )}
+            
+            <Badge 
+              variant={isWorkflowActive ? 'success' : 'default'} 
+              size="sm" 
+              dot={isWorkflowActive}
             >
-              {workflowTitle || 'Untitled Workflow'}
-            </h1>
-          )}
-          <button
-            onClick={() => setIsEditingTitle(true)}
-            className="text-gray-400 hover:text-gray-200 transition-colors"
-            title="Edit workflow name"
-          >
-      
-          </button>
+              {isWorkflowActive ? 'Active' : 'Inactive'}
+            </Badge>
+            
+            <button
+              onClick={onToggleActive}
+              className="text-xs text-gray-400 hover:text-blue-400 transition-colors"
+            >
+              {isWorkflowActive ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
         </div>
 
-        {/* Active Status Toggle */}
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-300">Status:</span>
-          <button
-            onClick={onToggleActive}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              isWorkflowActive
-                ? 'bg-green-700 text-green-100 hover:bg-green-600'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+        {/* Right side - Action buttons - Compact */}
+        <div className="flex items-center gap-2">
+          {/* Create Workflow */}
+          <Button
+            onClick={onNewWorkflow}
+            variant="secondary"
+            size="sm"
           >
-            {isWorkflowActive ? '🟢 Active' : '⚪ Inactive'}
-          </button>
+            Create Workflow
+          </Button>
+
+          {/* Save Workflow */}
+          <Button
+            onClick={onSaveWorkflow}
+            variant="primary"
+            size="sm"
+            isLoading={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
+
+          {/* Execute Workflow */}
+          <Button
+            onClick={onExecuteWorkflow}
+            variant="success"
+            size="sm"
+            disabled={!isWorkflowActive || isExecuting}
+            isLoading={isExecuting}
+          >
+            {isExecuting ? 'Executing...' : 'Execute'}
+          </Button>
         </div>
-      </div>
-
-      {/* Right side - Action buttons */}
-      <div className="flex items-center space-x-3">
-        {/* New Workflow */}
-        <button
-          onClick={onNewWorkflow}
-          className="px-2.5 py-1.5 text-gray-200 hover:text-white bg-orange-600 hover:bg-orange-800 rounded-lg transition-colors flex items-center space-x-2"
-          title="Create new workflow"
-        >
-          <span className='font-semibold'>New Workflow</span>
-        </button>
-
-        {/* Save Workflow */}
-        <button
-          onClick={onSaveWorkflow}
-          disabled={isSaving}
-          className="px-3 py-1 bg-blue-700 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-center space-x-2"
-          title="Save workflow"
-        >
-          {isSaving ? (
-            <>
-              <div className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Saving...</span>
-            </>
-          ) : (
-            <>
-              <span className='font-semibold'>Save</span>
-            </>
-          )}
-        </button>
-
-        {/* Execute Workflow */}
-        <button
-          onClick={onExecuteWorkflow}
-          disabled={!isWorkflowActive || isExecuting}
-          className="px-3 py-1 bg-green-700 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-          title={isWorkflowActive ? "Execute workflow" : "Activate workflow to execute"}
-        >
-          {isExecuting ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span className='font-semibold'>Executing...</span>
-            </>
-          ) : (
-            <>
-              <span className='font-semibold'>Execute</span>
-            </>
-          )}
-        </button>
-
-        {/* Webhook Execute */}
-        {onWebhookExecute && (
-          <button
-            onClick={onWebhookExecute}
-            disabled={!isWorkflowActive}
-            className="px-3 py-1 bg-purple-700 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-            title={isWorkflowActive ? "Execute via webhook" : "Activate workflow to execute webhook"}
-          >
-            <span className='font-semibold'>Webhook</span>
-          </button>
-        )}
       </div>
     </div>
   );
