@@ -1,4 +1,6 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
+// useReactFlow is already imported in the main import block
+import { CredentialsSelector } from '../parameters/CredentialsSelector';
 import { Handle, Position, type NodeProps, useReactFlow } from '@xyflow/react';
 
 // AgentNode component represents a visual agent node in the flow graph with multiple connection points
@@ -32,10 +34,10 @@ const AgentNode = memo(({ data, selected, id }: NodeProps) => {
       {/* Agent Node Container - Larger for multiple handles */}
       <div
         className={`relative bg-gray-600 rounded-lg border-2 transition-all duration-300 flex items-center justify-center ${
-          selected 
-            ? 'border-gray-500 shadow-lg scale-105' 
-            : 'border-white shadow-md'
-        } hover:border-orange-500 hover:shadow-lg hover:scale-102`}
+          (data as any)?.isExecuting || (data as any)?.isExecuted
+            ? 'border-green-500'
+            : (selected ? 'border-gray-500 shadow-lg scale-105' : 'border-white shadow-md')
+        } ${(data as any)?.isExecuting || (data as any)?.isExecuted ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
         style={{
           width: '144px',
           height: '160px' // Increased height to accommodate bottom handles
@@ -114,7 +116,16 @@ const AgentNode = memo(({ data, selected, id }: NodeProps) => {
         )}
       </div>
 
-      {/* Text Below Node */}
+          {/* Quick Config Popover */}
+          {/* Quick Config Popover - anchored above node */}
+          {(data as any)?.showConfig && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-64 bg-gray-900 border border-gray-800 rounded-lg shadow-xl p-3">
+              <div className="text-xs font-semibold text-gray-200 mb-2">Quick Config</div>
+              <AgentQuickConfig id={id} data={data} />
+            </div>
+          )}
+
+          {/* Text Below Node */}
       <div className="mt-2 flex flex-col items-center text-center max-w-24 mx-auto">
         <div className="text-xs font-medium text-gray-700 leading-tight truncate">
           {(data as any)?.label}
@@ -133,3 +144,86 @@ const AgentNode = memo(({ data, selected, id }: NodeProps) => {
 AgentNode.displayName = 'AgentNode';
 
 export default AgentNode;
+function AgentQuickConfig({ id, data }: any) {
+  const rf = useReactFlow();
+  const [local, setLocal] = useState({
+    credentialsId: data?.credentialsId || '',
+    parameters: { ...(data?.parameters || {}) },
+  });
+
+  useEffect(() => {
+    setLocal({
+      credentialsId: data?.credentialsId || '',
+      parameters: { ...(data?.parameters || {}) },
+    });
+  }, [id]);
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-[11px] text-gray-400 mb-1">Credentials</label>
+        <CredentialsSelector
+          credentialType="gemini"
+          selectedCredentialId={local.credentialsId}
+          onChange={(id: string) => setLocal((l) => ({ ...l, credentialsId: id }))}
+          compact
+        />
+      </div>
+      <div>
+        <label className="block text-[11px] text-gray-400 mb-1">API Key</label>
+        <input
+          type="password"
+          className="w-full border rounded px-2 py-1.5 bg-gray-800 text-white border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs"
+          value={(local.parameters as any)?.apiKey || ''}
+          onChange={(e) => setLocal((l) => ({ ...l, parameters: { ...(l.parameters || {}), apiKey: e.target.value } }))}
+          placeholder="Enter API key"
+        />
+      </div>
+      <label className="inline-flex items-center gap-2 text-[11px] text-gray-300">
+        <input
+          type="checkbox"
+          className="accent-orange-500"
+          checked={Boolean((local.parameters as any)?.usePreviousResult)}
+          onChange={(e) => setLocal((l) => ({ ...l, parameters: { ...(l.parameters || {}), usePreviousResult: e.target.checked } }))}
+        />
+        Use previous node result
+      </label>
+      <div className="flex justify-end gap-2 pt-1">
+        <button
+          onClick={() => {
+            setLocal({
+              credentialsId: data?.credentialsId || '',
+              parameters: { ...(data?.parameters || {}) },
+            });
+          }}
+          className="px-3 py-1.5 text-xs rounded-lg border border-gray-700 bg-gray-800 text-white hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            if ((data as any)?.onQuickUpdate) {
+              (data as any).onQuickUpdate({ credentialsId: local.credentialsId, parameters: local.parameters });
+            } else {
+              rf.setNodes((nodes: any[]) => nodes.map((n: any) => {
+                if (n.id !== id) return n;
+                return {
+                  ...n,
+                  data: {
+                    ...n.data,
+                    credentialsId: local.credentialsId || undefined,
+                    parameters: { ...(n.data?.parameters || {}), ...(local.parameters || {}) },
+                  }
+                };
+              }));
+            }
+            rf.setNodes((nodes: any[]) => nodes.map((n: any) => (n.id === id ? { ...n, data: { ...n.data, showConfig: false } } : n)));
+          }}
+          className="px-3 py-1.5 text-xs rounded-lg bg-orange-600 text-white hover:bg-orange-700"
+        >
+          Save Config
+        </button>
+      </div>
+    </div>
+  );
+}

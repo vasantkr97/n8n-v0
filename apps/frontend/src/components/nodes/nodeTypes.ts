@@ -1,4 +1,3 @@
-import AgentNode from './AgentNode';
 import N8nNode from './N8nNode';
 import TelegramNode from './TelegramNode';
 import EmailNode from './EmailNode';

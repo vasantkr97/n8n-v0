@@ -43,7 +43,26 @@ export const useNodeActions = ({ workflowId, setNodes, setEdges }: UseNodeAction
       label: cfg.label,
       description: cfg.description,
       workflowId: workflowId,
-    });
+      onQuickUpdate: (partial: any) => {
+        setNodes((nodes: any) => nodes.map((n: any) => {
+          if (n.id !== newNodeId) return n;
+          const nextData = { ...n.data };
+          // merge credentialsId directly under data
+          if (partial && Object.prototype.hasOwnProperty.call(partial, 'credentialsId')) {
+            nextData.credentialsId = partial.credentialsId;
+          }
+          // merge parameters
+          if (partial && partial.parameters) {
+            nextData.parameters = { ...(n.data?.parameters || {}), ...partial.parameters };
+          }
+          // also allow direct shallow fields (e.g., usePreviousResult fallback)
+          if (partial && Object.prototype.hasOwnProperty.call(partial, 'usePreviousResult')) {
+            nextData.parameters = { ...(n.data?.parameters || {}), usePreviousResult: partial.usePreviousResult };
+          }
+          return { ...n, data: nextData };
+        }));
+      },
+    } as any);
 
     setNodes((nds: any) => [...nds, newNode]);
   }, [setNodes, workflowId]);

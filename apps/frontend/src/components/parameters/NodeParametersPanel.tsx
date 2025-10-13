@@ -35,7 +35,7 @@ export function NodeParametersPanel({ node, onClose, onSave }: any) {
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/40"
         onClick={onClose}
       />
       

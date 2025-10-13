@@ -100,12 +100,13 @@ export const useWorkflowActions = ({
       
       const backendNodes = nodes.map(node => {
         const backendNode = {
+          id: node.id, // persist stable id for disambiguation
           name: node.data?.label || node.id,
           type: node.type,
           parameters: node.data?.parameters || {},
           credentials: node.data?.credentialsId ? { id: node.data.credentialsId } : undefined,
           position: [node.position.x, node.position.y]
-        };
+        } as any;
         console.log('🔧 Mapping node to backend format:', {
           original: node,
           backend: backendNode
@@ -113,14 +114,11 @@ export const useWorkflowActions = ({
         return backendNode;
       });
 
-      const backendConnections = edges.map(edge => {
-        const sourceNode = nodes.find(n => n.id === edge.source);
-        const targetNode = nodes.find(n => n.id === edge.target);
-        return {
-          source: sourceNode?.data?.label || sourceNode?.id || edge.source,
-          target: targetNode?.data?.label || targetNode?.id || edge.target
-        };
-      });
+      // Persist connections by node ids to avoid ambiguity with duplicate names
+      const backendConnections = edges.map(edge => ({
+        source: edge.source,
+        target: edge.target,
+      }));
 
       const triggerNode = nodes.find(n => getNodeConfig(n.type || '').isTrigger);
       const triggerType = triggerNode?.type?.toUpperCase() || 'MANUAL';

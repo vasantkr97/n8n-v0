@@ -46,7 +46,8 @@ export const useWorkflowLoader = ({
         const mappedNodes = (wf.nodes || []).map((n: any, idx: number) => {
           const type = (n.type || '').toLowerCase();
           const cfg = getNodeConfig(type);
-          const id = n.name || `node-${idx}`;
+          // Prefer persisted backend id; fallback to name; then to generated
+          const id = n.id || n.name || `node-${idx}`;
           const position = Array.isArray(n.position)
             ? { x: n.position[0], y: n.position[1] }
             : { x: 0, y: idx * 120 };
@@ -61,11 +62,12 @@ export const useWorkflowLoader = ({
               parameters: n.parameters || {},
               credentialsId: n.credentials?.id,
               workflowId: wf.id,
-              webhookToken: wf.webhookToken, // Add webhook token to node data
+              webhookToken: wf.webhookToken,
             },
           };
         });
 
+        // Connections are persisted by node ids (fallback to names on older workflows)
         const mappedEdges = (wf.connections || []).map((c: any, idx: number) => ({
           id: `${c.source}-${c.target}-${idx}`,
           source: c.source,

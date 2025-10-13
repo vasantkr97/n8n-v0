@@ -4,6 +4,43 @@ import { executeTelegramAction } from "./nodeExecutors/telegramExecutor";
 import { executeEmailAction } from "./nodeExecutors/emailExecutor";
 import { executeGeminiAction } from "./nodeExecutors/geminiExecutor";
 
+// Helper function to safely clone data and avoid circular references
+function safeClone(obj: any, maxDepth: number = 10, depth: number = 0, seen: WeakSet<any> = new WeakSet()): any {
+    if (depth > maxDepth) {
+        return '[Max Depth Reached]';
+    }
+    
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    
+    if (obj instanceof Date) {
+        return obj;
+    }
+    
+    // Check for circular reference
+    if (seen.has(obj)) {
+        return '[Circular Reference]';
+    }
+    
+    // Mark this object as seen
+    seen.add(obj);
+    
+    if (Array.isArray(obj)) {
+        return obj.map(item => safeClone(item, maxDepth, depth + 1, seen));
+    }
+    
+    const cloned: any = {};
+    
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            cloned[key] = safeClone(obj[key], maxDepth, depth + 1, seen);
+        }
+    }
+    
+    return cloned;
+}
+
 export async function executeWorkflow(
     workflowId: string,
     userId: string,
@@ -74,8 +111,6 @@ async function executeInBackground(
         console.log("📋 Execution data:");
         console.log(`  - Nodes: ${nodes.length}`);
         console.log(`  - Connections: ${connections.length}`);
-        console.log("  - Nodes:", JSON.stringify(nodes, null, 2));
-        console.log("  - Connections:", JSON.stringify(connections, null, 2));
 
         //create execution Context
         const context: ExecutionContext = {
@@ -104,7 +139,7 @@ async function executeInBackground(
             where: { id: executionId },
             data: {
                 status: "SUCCESS",
-                results,
+                results: safeClone(results),
                 finishedAt: new Date()
             }
         })
@@ -133,31 +168,67 @@ async function executeNodeChain(
     allNodes: WorkflowNode[],
     connections: WorkflowConnection[],
     context: ExecutionContext,
+    previousNodeId?: string,
+    visitedNodes: Set<string> = new Set()
 ): Promise<any> {
-    //execute Current Node
-    const nodeResult = await executeNode(currentNode, context)
+    // Get unique identifier for current node
+    const currentKey = (currentNode as any).id || currentNode.name;
     
-    //store the complete node result for future reference
-    context.nodeResults[currentNode.name] = nodeResult
+    // Check if we've already visited this node to prevent infinite loops
+    if (visitedNodes.has(currentKey)) {
+        console.log(`⚠️  Cycle detected: Node ${currentNode.name} (${currentKey}) already visited. Skipping to prevent infinite loop.`);
+        return context.nodeResults[currentNode.name];
+    }
+    
+    // Mark this node as visited
+    visitedNodes.add(currentKey);
+    
+    //execute Current Node
+    const nodeResult = await executeNode(currentNode, context, previousNodeId)
+    
+    // Use safeClone to prevent circular references
+    const safeNodeResult = safeClone(nodeResult);
+    
+    //store the complete node result for future reference (support duplicate names)
+    if (context.nodeResults[currentNode.name]) {
+        const existing = context.nodeResults[currentNode.name];
+        if (Array.isArray(existing)) {
+            existing.push(safeNodeResult);
+        } else {
+            context.nodeResults[currentNode.name] = [existing, safeNodeResult];
+        }
+    } else {
+        context.nodeResults[currentNode.name] = safeNodeResult;
+    }
 
-    //Update context data with the latest successfull node result for immediate next access
-    if (nodeResult && nodeResult.success && nodeResult.data) {
-        context.data = nodeResult.data;
-    };
+    // Update context data map keyed by node id for targeted lookups
+    if (nodeResult && nodeResult.success && nodeResult.data !== undefined) {
+        const key = (currentNode as any).id || currentNode.name;
+        if (!context.data) (context as any).data = {} as any;
+        (context.data as any)[key] = safeClone(nodeResult.data);
+    }
 
+    // Support connections by id or by name (backward compatibility)
     const nextEdges = connections.filter(
-        (conn) => conn.source === currentNode.name,
+        (conn) => conn.source === currentKey || conn.source === currentNode.name,
     );
 
     if(!nextEdges.length) {
         return nodeResult
     };
 
-    for (const edges of nextEdges) {
-        const nextNode = allNodes.find((node) => node.name === edges.target);
-        if (nextNode) {
-            await executeNodeChain(nextNode, allNodes, connections, context)
-        }
+    // Execute each distinct target once. Match nodes by id or by name.
+    const targetKeys = Array.from(new Set(nextEdges.map(e => e.target)));
+    const candidateNextNodes = allNodes.filter(n => {
+        const nodeId = (n as any).id;
+        // prefer id match; fall back to name for older workflows
+        return (nodeId && targetKeys.includes(nodeId as any)) || targetKeys.includes(n.name);
+    });
+
+    for (const nextNode of candidateNextNodes) {
+        const currentNodeId = (currentNode as any).id || currentNode.name;
+        // Pass the visitedNodes set to track cycles across the entire execution path
+        await executeNodeChain(nextNode, allNodes, connections, context, currentNodeId, visitedNodes)
     }
 
     //get next node from Connections
@@ -180,9 +251,8 @@ async function executeNodeChain(
 };
 
 
-async function executeNode(node: WorkflowNode, context: ExecutionContext): Promise<any> {
+async function executeNode(node: WorkflowNode, context: ExecutionContext, previousNodeId?: string): Promise<any> {
     console.log(`\n🔄 Executing node: ${node.name} (${node.type})`);
-    console.log(`  - Node data:`, JSON.stringify(node, null, 2));
 
     // Check if this is a trigger node
     const triggerTypes = ["trigger", "manual", "webhook", "schedule", "cron"];
@@ -228,13 +298,13 @@ async function executeNode(node: WorkflowNode, context: ExecutionContext): Promi
         console.log(`  ⚠️  No credentials attached to this node`);
     }
 
-    //Route tp appropriate executor
+    //Route to appropriate executor
     if (node.type.toLowerCase().includes("telegram")) {
-        return await executeTelegramAction(node, context, credentialId);
+        return await executeTelegramAction(node, context, credentialId, previousNodeId);
     } else if (node.type.toLowerCase().includes('email')) {
-        return await executeEmailAction(node, context, credentialId);
+        return await executeEmailAction(node, context, credentialId, previousNodeId);
     } else if (node.type.toLowerCase().includes("gemini")) {
-        return await executeGeminiAction(node, context, credentialId);
+        return await executeGeminiAction(node, context, credentialId, previousNodeId);
     };
 
     return {

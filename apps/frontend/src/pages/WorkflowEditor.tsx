@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ReactFlow, Controls, Background, MiniMap, BackgroundVariant } from "@xyflow/react";
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes } from "../components/nodes/nodeTypes";
 import { edgeTypes } from "../components/edges/edgeTypes";
 import WorkflowToolbar from "../components/WorkflowToolbar";
-import { NodeParametersPanel } from "../components/parameters/NodeParametersPanel";
+// import { CredentialsSelector } from "../components/parameters/CredentialsSelector";
+// import { NodeParametersPanel } from "../components/parameters/NodeParametersPanel";
 import { NodeSelector } from "../components/NodeSelector";
 
 import { useWorkflowState } from "../hooks/useWorkflowState";
@@ -16,7 +17,7 @@ import { useWorkflowLoader } from "../hooks/useWorkflowLoader";
 export default function WorkflowEditor() {
   const state = useWorkflowState();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [showParametersPanel, setShowParametersPanel] = useState(false);
+  // const [showParametersPanel, setShowParametersPanel] = useState(false);
   const [showNodeSelector, setShowNodeSelector] = useState(false);
 
   const actions = useWorkflowActions({
@@ -52,6 +53,10 @@ export default function WorkflowEditor() {
   const selectedNode = selectedNodeId 
     ? state.nodes.find((n: any) => n.id === selectedNodeId) 
     : null;
+  const selectedNodeType = (selectedNode as any)?.type;
+  const setNodesUnsafe = state.setNodes as unknown as (updater: any) => void;
+
+  // inline node popovers handle editing; no central overlay state
 
   const handleAddNodeClick = () => {
     setShowNodeSelector(true);
@@ -106,8 +111,29 @@ export default function WorkflowEditor() {
           onEdgesChange={state.onEdgesChange}
           onConnect={nodeActions.onConnect}
           onNodeClick={(_event, node: any) => {
+            // Only open config on explicit click, not after a drag
             setSelectedNodeId(node.id);
-            setShowParametersPanel(true);
+            // Toggle showConfig only for the clicked node
+            const setNodesUnsafe = state.setNodes as unknown as (updater: any) => void;
+            setNodesUnsafe((nodes: any[]) => nodes.map((n: any) => ({
+              ...n,
+              data: { ...n.data, showConfig: n.id === node.id },
+            })));
+          }}
+          onNodeDragStart={() => {
+            // While dragging, do not change showConfig
+          }}
+          onNodeDragStop={() => {
+            // No-op; config opens only on click
+          }}
+          onPaneClick={() => {
+            // Clicking empty canvas closes any open config cards
+            const setNodesUnsafe = state.setNodes as unknown as (updater: any) => void;
+            setNodesUnsafe((nodes: any[]) => nodes.map((n: any) => ({
+              ...n,
+              data: { ...n.data, showConfig: false },
+            })));
+            setSelectedNodeId(null);
           }}
           nodeTypes={nodeTypes as any}
           edgeTypes={edgeTypes as any}
@@ -190,17 +216,7 @@ export default function WorkflowEditor() {
         hasTrigger={state.nodes.some((n: any) => n?.data?.isTrigger === true)}
       />
 
-      {/* Parameters Panel */}
-      {showParametersPanel && selectedNode && (
-        <NodeParametersPanel
-          node={selectedNode}
-          onClose={() => {
-            setShowParametersPanel(false);
-            setSelectedNodeId(null);
-          }}
-          onSave={nodeActions.handleUpdateNodeData}
-        />
-      )}
+      {/* No central overlay */}
     </div>
   );
 }

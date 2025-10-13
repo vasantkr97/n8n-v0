@@ -31,9 +31,9 @@ export const NodeSelector = ({ onNodeSelect, onClose, isVisible, hasTrigger }: N
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop (transparent, no blur or dimming) */}
       <div 
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+        className="fixed inset-0 z-40"
         onClick={onClose}
       />
       

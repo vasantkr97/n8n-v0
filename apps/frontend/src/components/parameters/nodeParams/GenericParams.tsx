@@ -41,7 +41,7 @@ export default function GenericParams({ data, setData }: GenericParamsProps) {
       return (
         <input
           type="number"
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full px-2 py-1 border rounded text-sm bg-gray-800 text-white placeholder-gray-500 border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
           value={String(value)}
           onChange={(e) => handleParamChange(key, Number(e.target.value))}
         />
@@ -50,7 +50,7 @@ export default function GenericParams({ data, setData }: GenericParamsProps) {
     if (valueType === "boolean") {
       return (
         <select
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full px-2 py-1 border rounded text-sm bg-gray-800 text-white border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
           value={value ? "true" : "false"}
           onChange={(e) => handleParamChange(key, e.target.value === "true")}
         >
@@ -63,7 +63,7 @@ export default function GenericParams({ data, setData }: GenericParamsProps) {
     return (
       <input
         type="text"
-        className="w-full px-2 py-1 border rounded text-sm"
+        className="w-full px-2 py-1 border rounded text-sm bg-gray-800 text-white placeholder-gray-500 border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
         value={value ?? ""}
         onChange={(e) => handleParamChange(key, e.target.value)}
       />
@@ -76,7 +76,7 @@ export default function GenericParams({ data, setData }: GenericParamsProps) {
         <label className="block text-sm font-medium mb-1">Credentials ID</label>
         <input
           type="text"
-          className="w-full px-2 py-1 border rounded text-sm"
+          className="w-full px-2 py-1 border rounded text-sm bg-gray-800 text-white placeholder-gray-500 border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
           placeholder="Optional credentials id"
           value={credentialId}
           onChange={(e) => setCredentialId(e.target.value)}
@@ -88,7 +88,7 @@ export default function GenericParams({ data, setData }: GenericParamsProps) {
         <button
           type="button"
           onClick={handleAddField}
-          className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 border"
+          className="px-2 py-1 text-xs rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white"
         >
           + Add field
         </button>

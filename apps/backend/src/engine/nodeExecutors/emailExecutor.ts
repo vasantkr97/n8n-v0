@@ -6,7 +6,8 @@ import replaceVariable from "../replaceVariable";
 export async function executeEmailAction(
     node: WorkflowNode,
     context: ExecutionContext,
-    credentialId: any
+    credentialId: any,
+    previousNodeId?: string
 ): Promise<any> {
     try {
         console.log("email is called");
@@ -33,7 +34,49 @@ export async function executeEmailAction(
         const apiKey = credData.apiKey;
         const fromEmail = credData.fromEmail;
         
-        const { from, to, subject, html, text } = node.parameters;
+        let { from, to, subject, html, text, usePreviousResult } = node.parameters as any;
+        if (usePreviousResult && context.data) {
+            let previousText: string | undefined;
+            try {
+                const sourceMap = context.data as any;
+                let chosen: any;
+                
+                // Use the immediate previous node if available, otherwise fall back to old logic
+                if (previousNodeId && sourceMap && typeof sourceMap === 'object') {
+                    chosen = sourceMap[previousNodeId];
+                    console.log(`🔍 Using immediate previous node result from: ${previousNodeId}`);
+                } else {
+                    // Fallback to old logic for backward compatibility
+                    const preferredSourceId = (node.parameters as any)?.previousNodeId;
+                    const sourcePayload = preferredSourceId ? sourceMap?.[preferredSourceId] : undefined;
+                    chosen = sourcePayload ?? sourceMap;
+                }
+                
+                if (typeof chosen === 'string') {
+                    previousText = chosen as string;
+                } else if (chosen && typeof chosen === 'object') {
+                    previousText = (chosen as any).text ?? JSON.stringify(chosen);
+                }
+            } catch {}
+
+            if (previousText) {
+                if (typeof html === 'string' && html.length > 0) {
+                    if (html.includes('{{previous}}')) {
+                        html = html.split('{{previous}}').join(previousText);
+                    } else {
+                        html = `${html}<br/><br/>${previousText}`;
+                    }
+                } else if (typeof text === 'string' && text.length > 0) {
+                    if (text.includes('{{previous}}')) {
+                        text = text.split('{{previous}}').join(previousText);
+                    } else {
+                        text = `${text}\n\n${previousText}`;
+                    }
+                } else {
+                    text = previousText;
+                }
+            }
+        }
 
         if (!from || !to || !subject) {
             throw new Error('From, to, and subject are required for email action');

@@ -21,10 +21,16 @@ export const postCredentials = async (req: AuthRequest, res:Response) => {
             return res.status(404).json({ msg: "All credentials fields are required"});
         }
 
+        // Normalize incoming platform strings to Prisma enum values
+        const normalizedPlatform = normalizePlatform(platform);
+        if (!normalizedPlatform) {
+            return res.status(400).json({ msg: `Invalid platform: ${platform}` });
+        }
+
         const credentials = await prisma.credentials.create({
             data: {
                 title,
-                platform,
+                platform: normalizedPlatform as any,
                 data,
                 userId
             }
@@ -123,13 +129,16 @@ export const updateCredentials = async (req: Request, res: Response) => {
             return res.status(404).json({ msg: "credentials not found or not owned by user"})
         };
 
+        // Normalize platform if provided
+        const normalizedPlatform = platform ? normalizePlatform(platform) : undefined;
+
         const updated = await prisma.credentials.update({
             where: { 
                 id
             },
             data: {
                 title: title ?? exisiting.title,
-                platform: platform ?? exisiting.platform,
+                platform: (normalizedPlatform as any) ?? exisiting.platform,
                 data: data ?? exisiting.data
             }
         })
@@ -143,6 +152,18 @@ export const updateCredentials = async (req: Request, res: Response) => {
         return res.status(500).json({ error: "Internal server error"})
     }
 };
+
+// Helper to map input platform strings to Prisma enum values
+function normalizePlatform(input: string): string | null {
+    const value = String(input || '').trim().toLowerCase();
+    if (!value) return null;
+    if (value === 'telegram') return 'Telegram';
+    if (value === 'gemini') return 'Gemini';
+    if (value === 'email' || value === 'resend' || value === 'resendemail') return 'ResendEmail';
+    // Already an enum value?
+    if (['Telegram','Gemini','ResendEmail'].includes(input)) return input;
+    return null;
+}
 
 export const deleteCredentials = async (req: Request, res: Response) => {
     try {

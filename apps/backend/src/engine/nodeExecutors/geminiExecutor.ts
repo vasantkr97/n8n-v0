@@ -7,32 +7,54 @@ import { GoogleGenAI } from "@google/genai";
 export async function executeGeminiAction(
   node: WorkflowNode,
   context: ExecutionContext,
-  credentialId: any
+  credentialId: any,
+  previousNodeId?: string
 ): Promise<any> {
   try {
-    if (!credentialId) {
-      throw new Error("Gemini credentials not provided. Please select or create credentials.");
+    // Try to use credentials by id; if not present, we may fallback to node.parameters.apiKey
+
+    let apiKeyFromCreds: string | undefined;
+    if (credentialId) {
+      console.log("🔍 Looking up credential with ID:", credentialId);
+      const credentials = await prisma.credentials.findFirst({
+        where: { id: credentialId }
+      });
+
+      console.log("🔍 Retrieved Credentials:", credentials);
+
+      if (credentials && credentials.data && typeof credentials.data === "object") {
+        const credData = credentials.data as { apiKey?: string };
+        apiKeyFromCreds = credData.apiKey;
+      }
     }
 
-    console.log("🔍 Looking up credential with ID:", credentialId);
-    const credentials = await prisma.credentials.findFirst({
-      where: { id: credentialId }
-    });
-
-    console.log("🔍 Retrieved Credentials:", credentials);
-
-    if (!credentials || !credentials.data || typeof credentials.data !== "object") {
-      throw new Error("Gemini Credentials not Found");
+    let { prompt, model = "gemini-1.5-flash", temperature = 0.7, usePreviousResult, apiKey: apiKeyFromParams } = node.parameters as any;
+    const apiKey = apiKeyFromCreds || apiKeyFromParams;
+    if (!apiKey) {
+      throw new Error("Gemini API key not provided. Select credentials or enter an API key in the node config.");
     }
-
-    const credData = credentials.data as { apiKey?: string };
-    
-    if (!credData.apiKey) {
-      throw new Error("Gemini API key not found in credentials");
+    if (usePreviousResult && context.data && !prompt) {
+      try {
+        let chosen: any;
+        
+        // Use the immediate previous node if available, otherwise fall back to old logic
+        if (previousNodeId && context.data && typeof context.data === 'object') {
+          chosen = (context.data as any)[previousNodeId];
+          console.log(`🔍 Using immediate previous node result from: ${previousNodeId}`);
+        } else {
+          // Fallback to old logic for backward compatibility
+          chosen = context.data;
+        }
+        
+        if (typeof chosen === 'string') {
+          prompt = chosen;
+        } else if (chosen && typeof chosen === 'object') {
+          prompt = (chosen as any).text ?? JSON.stringify(chosen);
+        } else {
+          prompt = typeof context.data === 'string' ? context.data : JSON.stringify(context.data);
+        }
+      } catch {}
     }
-
-    const apiKey = credData.apiKey;
-    const { prompt, model = "gemini-1.5-flash", temperature = 0.7 } = node.parameters;
 
     if (!prompt) {
       throw new Error('Prompt is required for Gemini Action');

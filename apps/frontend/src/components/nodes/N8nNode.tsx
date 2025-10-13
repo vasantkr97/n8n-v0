@@ -56,10 +56,10 @@ const N8nNode = memo(({ data, selected, id }: NodeProps) => {
         className={`relative bg-gray-600 w-28 h-24 border-2 transition-all duration-300 flex items-center justify-center ${
           isTrigger ? 'rounded-l-full rounded-r-lg' : 'rounded-lg'
         } ${
-          selected
-            ? 'border-gray-500 shadow-lg scale-105'
-            : 'border-white shadow-md'
-        } hover:border-orange-500 hover:shadow-lg hover:scale-102`}
+          (data as any)?.isExecuting || (data as any)?.isExecuted
+            ? 'border-green-500'
+            : (selected ? 'border-gray-500 shadow-lg scale-105' : 'border-white shadow-md')
+        } ${(data as any)?.isExecuting || (data as any)?.isExecuted ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
       >
         {/* Input Handle - left edge center (not for triggers) */}
         {!isTrigger && (
@@ -102,6 +102,9 @@ const N8nNode = memo(({ data, selected, id }: NodeProps) => {
           </span>
         </div>
       </div>
+
+      {/* Quick Config Popover */}
+      {/* Inline popover removed - centralized overlay used */}
 
       {/* Text Below Node */}
       <div className="mt-2 flex flex-col items-center text-center max-w-28 mx-auto">

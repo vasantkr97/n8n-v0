@@ -12,7 +12,7 @@ const getGeminiCredentials = async () => {
 const createGeminiCredential = async (formData: { title: string; apiKey: string }) => {
   return await postCredentials({
     title: formData.title,
-    platform: 'gemini',
+    platform: 'Gemini',
     data: { apiKey: formData.apiKey }
   });
 };
@@ -34,8 +34,8 @@ export function GeminiCredentials() {
   const createMutation = useMutation({
     mutationFn: createGeminiCredential,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["geminiCredentials"] });
-      queryClient.invalidateQueries({ queryKey: ["credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["geminiCredentials"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["credentials"], exact: false });
       setShowForm(false);
       setFormData({ title: "", apiKey: "" });
       alert('✅ Gemini credential saved successfully!');
@@ -57,7 +57,7 @@ export function GeminiCredentials() {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 py-2">
-        <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+        <div className="animate-spin h-4 w-4 border-2 border-orange-500 border-t-transparent rounded-full"></div>
         <p className="text-sm text-gray-400">Loading...</p>
       </div>
     );
@@ -101,8 +101,8 @@ export function GeminiCredentials() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md shadow-2xl border border-gray-700">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-xl w-full max-w-md shadow-2xl border border-gray-800">
             <h3 className="text-xl font-semibold mb-4 flex items-center">
               <span className="text-2xl mr-2">✨</span>
               New Gemini Credential
@@ -119,7 +119,7 @@ export function GeminiCredentials() {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, title: e.target.value }))
                   }
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-gray-400"
+                className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-white placeholder-gray-400"
                 />
               </div>
               <div>
@@ -133,7 +133,7 @@ export function GeminiCredentials() {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, apiKey: e.target.value }))
                   }
-                  className="w-full px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-gray-400"
+                className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-white placeholder-gray-400"
                 />
                 <p className="text-xs text-gray-400 mt-1">
                   Get your API key from Google AI Studio
@@ -143,14 +143,14 @@ export function GeminiCredentials() {
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={() => setShowForm(false)}
-                className="flex-1 border border-gray-600 hover:border-gray-500 rounded-lg py-2 transition-colors"
+                className="flex-1 border border-gray-700 hover:border-gray-600 rounded-lg py-2 transition-colors bg-gray-800 text-white"
               >
                 Cancel
               </button>
               <button
                 disabled={!formData.title || !formData.apiKey || createMutation.isPending}
                 onClick={() => createMutation.mutate(formData)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-lg py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 bg-orange-600 hover:bg-orange-700 rounded-lg py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {createMutation.isPending ? 'Saving...' : 'Save'}
               </button>

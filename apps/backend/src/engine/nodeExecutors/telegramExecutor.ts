@@ -6,7 +6,8 @@ import replaceVariable from "../replaceVariable";
 export async function executeTelegramAction(
     node: WorkflowNode,
     context: ExecutionContext,
-    credentialId: any
+    credentialId: any,
+    previousNodeId?: string
 ): Promise<any> {
     try {
         if (!credentialId) {
@@ -31,14 +32,60 @@ export async function executeTelegramAction(
         }
 
         const botToken = credData.botToken;
-        const { chatId, message, parseMode = 'HTML' } = node.parameters;
+        let { chatId, message, parseMode = 'HTML', usePreviousResult } = node.parameters as any;
 
-        if (!chatId || !message) {
+        // Build effective message using previous output if requested
+        let effectiveMessage = message || '';
+        if (usePreviousResult && context.data) {
+            let previousText: string | undefined;
+            try {
+                const sourceMap = context.data as any;
+                let chosen: any;
+                
+                // Use the immediate previous node if available, otherwise fall back to old logic
+                if (previousNodeId && sourceMap && typeof sourceMap === 'object') {
+                    chosen = sourceMap[previousNodeId];
+                    console.log(`🔍 Using immediate previous node result from: ${previousNodeId}`);
+                } else {
+                    // Fallback to old logic for backward compatibility
+                    const preferredSourceId = (node.parameters as any)?.previousNodeId;
+                    if (preferredSourceId && sourceMap && typeof sourceMap === 'object') {
+                        chosen = sourceMap[preferredSourceId];
+                    } else if (sourceMap && typeof sourceMap === 'object') {
+                        const values = Object.values(sourceMap);
+                        if (Array.isArray(values) && values.length > 0) {
+                            // Prefer a value that has a 'text' string (e.g., Gemini), else use last value
+                            const withText = values.findLast?.((v: any) => v && typeof v === 'object' && typeof v.text === 'string')
+                              || [...values].reverse().find((v: any) => typeof v === 'string' || typeof v === 'object');
+                            chosen = withText ?? values[values.length - 1];
+                        }
+                    }
+                }
+                
+                if (typeof chosen === 'string') {
+                    previousText = chosen;
+                } else if (chosen && typeof chosen === 'object') {
+                    previousText = (chosen as any).text ?? JSON.stringify(chosen);
+                }
+            } catch {}
+
+            if (previousText) {
+                if (effectiveMessage.includes('{{previous}}')) {
+                    effectiveMessage = effectiveMessage.split('{{previous}}').join(previousText);
+                } else if (effectiveMessage.trim().length === 0) {
+                    effectiveMessage = previousText;
+                } else {
+                    effectiveMessage = `${effectiveMessage}\n\n${previousText}`;
+                }
+            }
+        }
+
+        if (!chatId || (!effectiveMessage && !message)) {
             throw new Error("ChatId and message are required for Telegram action");
         };
 
-        const processedMessage = replaceVariable(message, context);
-        console.log(message)
+        const processedMessage = replaceVariable(effectiveMessage || message, context);
+        console.log(effectiveMessage || message)
         console.log("Processed message:", processedMessage);
 
         //Add timeout to prevent hanging
