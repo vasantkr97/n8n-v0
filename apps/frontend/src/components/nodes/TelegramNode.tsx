@@ -31,11 +31,13 @@ const TelegramNode = memo(({ data, selected, id }: NodeProps) => {
           isTrigger ? 'rounded-l-full rounded-r-lg' : 'rounded-lg'
         } ${
           (data as any)?.hasError
-            ? 'border-red-500'
+            ? 'border-red-500 shadow-red-500/50'
+            : (data as any)?.isExecuting
+            ? 'border-blue-500 shadow-blue-500/50 animate-pulse'
             : (data as any)?.isExecuted
-            ? 'border-green-500'
+            ? 'border-green-500 shadow-green-500/50'
             : (selected ? 'border-gray-500 shadow-lg scale-105' : 'border-white shadow-md')
-        } ${(data as any)?.isExecuted || (data as any)?.hasError ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
+        } ${(data as any)?.isExecuted || (data as any)?.hasError || (data as any)?.isExecuting ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
       >
         {/* Input Handle */}
         {!isTrigger && (

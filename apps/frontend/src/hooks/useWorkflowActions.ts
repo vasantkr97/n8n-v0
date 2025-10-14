@@ -17,6 +17,7 @@ interface UseWorkflowActionsProps {
   edges: any[];
   resetWorkflow: () => void;
   setNodes: any;
+  startExecutionTracking?: (executionId: string) => void;
 }
 
 export const useWorkflowActions = ({
@@ -31,7 +32,8 @@ export const useWorkflowActions = ({
   nodes,
   edges,
   resetWorkflow,
-  setNodes
+  setNodes,
+  startExecutionTracking
 }: UseWorkflowActionsProps) => {
   const navigate = useNavigate();
 
@@ -197,26 +199,21 @@ export const useWorkflowActions = ({
     try {
       setIsExecuting(true);
       
-      // Reset node states before execution
-      setNodes((nodes: any[]) => nodes.map((node: any) => ({
-        ...node,
-        data: {
-          ...node.data,
-          isExecuted: false,
-          hasError: false
-        }
-      })));
-      
       const response = await manualExecute(workflowId);
       const executionId = response.data?.executionId;
       
       console.log(`🚀 Execution started: ${executionId}`);
       
-      // Simple execution feedback - just set executing to false after a delay
-      setTimeout(() => {
-        setIsExecuting(false);
-        alert(`✅ Execution completed! ID: ${executionId}`);
-      }, 2000);
+      // Start execution progress tracking
+      if (executionId && startExecutionTracking) {
+        startExecutionTracking(executionId);
+      } else {
+        // Fallback if no tracking available
+        setTimeout(() => {
+          setIsExecuting(false);
+          alert(`✅ Execution completed! ID: ${executionId}`);
+        }, 2000);
+      }
     } catch (error: any) {
       console.error('Error executing:', error);
       alert(`❌ Failed to execute:\n\n${error.response?.data?.error || error.message}`);

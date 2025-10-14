@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ReactFlow, Controls, Background, MiniMap, BackgroundVariant } from "@xyflow/react";
 import '@xyflow/react/dist/style.css';
 
@@ -13,9 +13,31 @@ import { useWorkflowState } from "../hooks/useWorkflowState";
 import { useWorkflowActions } from "../hooks/useWorkflowActions";
 import { useNodeActions } from "../hooks/useNodeActions";
 import { useWorkflowLoader } from "../hooks/useWorkflowLoader";
+import { useExecutionProgress } from "../hooks/useExecutionProgress";
 export default function WorkflowEditor() {
   const state = useWorkflowState();
   const [showNodeSelector, setShowNodeSelector] = useState(false);
+
+  // Execution progress tracking
+  const executionProgress = useExecutionProgress({
+    setNodes: state.setNodes,
+    setIsExecuting: state.setIsExecuting
+  });
+
+  // Debug: Log node states when they change
+  React.useEffect(() => {
+    const executingNodes = state.nodes.filter((n: any) => n.data?.isExecuting);
+    const executedNodes = state.nodes.filter((n: any) => n.data?.isExecuted);
+    const errorNodes = state.nodes.filter((n: any) => n.data?.hasError);
+    
+    if (executingNodes.length > 0 || executedNodes.length > 0 || errorNodes.length > 0) {
+      console.log('🎯 Node states:', {
+        executing: executingNodes.map((n: any) => n.data?.label || n.id),
+        executed: executedNodes.map((n: any) => n.data?.label || n.id),
+        errors: errorNodes.map((n: any) => n.data?.label || n.id)
+      });
+    }
+  }, [state.nodes]);
 
   const actions = useWorkflowActions({
     workflowId: state.workflowId,
@@ -29,7 +51,8 @@ export default function WorkflowEditor() {
     nodes: state.nodes,
     edges: state.edges,
     resetWorkflow: state.resetWorkflow,
-    setNodes: state.setNodes
+    setNodes: state.setNodes,
+    startExecutionTracking: executionProgress.startTracking
   });
 
   // Get webhookToken from existing webhook nodes or workflow data
