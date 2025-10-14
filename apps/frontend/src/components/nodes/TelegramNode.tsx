@@ -30,10 +30,12 @@ const TelegramNode = memo(({ data, selected, id }: NodeProps) => {
         className={`relative bg-gray-600 w-28 h-24 border-2 transition-all duration-300 flex items-center justify-center ${
           isTrigger ? 'rounded-l-full rounded-r-lg' : 'rounded-lg'
         } ${
-          (data as any)?.isExecuting || (data as any)?.isExecuted
+          (data as any)?.hasError
+            ? 'border-red-500'
+            : (data as any)?.isExecuted
             ? 'border-green-500'
             : (selected ? 'border-gray-500 shadow-lg scale-105' : 'border-white shadow-md')
-        } ${(data as any)?.isExecuting || (data as any)?.isExecuted ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
+        } ${(data as any)?.isExecuted || (data as any)?.hasError ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
       >
         {/* Input Handle */}
         {!isTrigger && (
@@ -89,7 +91,6 @@ export default TelegramNode;
 
 function TelegramQuickConfig({ id, data }: any) {
   const rf = useReactFlow();
-  const { setNodes } = useReactFlow();
   const [local, setLocal] = useState({
     credentialsId: data?.credentialsId || '',
     parameters: { ...(data?.parameters || {}) },

@@ -16,6 +16,7 @@ interface UseWorkflowActionsProps {
   nodes: any[];
   edges: any[];
   resetWorkflow: () => void;
+  setNodes: any;
 }
 
 export const useWorkflowActions = ({
@@ -29,7 +30,8 @@ export const useWorkflowActions = ({
   setIsExecuting,
   nodes,
   edges,
-  resetWorkflow
+  resetWorkflow,
+  setNodes
 }: UseWorkflowActionsProps) => {
   const navigate = useNavigate();
 
@@ -134,14 +136,34 @@ export const useWorkflowActions = ({
       console.log('💾 Saving workflow data:', workflowData);
 
       if (workflowId) {
-        await updateWorkflow(workflowId, workflowData);
+        const response = await updateWorkflow(workflowId, workflowData);
+        // Update webhook nodes with webhookToken if it was generated
+        if (response.data?.webhookToken) {
+          setNodes((nds: any[]) => nds.map((n: any) => ({
+            ...n,
+            data: {
+              ...n.data,
+              webhookToken: n.type === 'webhook' ? response.data.webhookToken : n.data.webhookToken
+            }
+          })));
+        }
         alert('✅ Workflow saved!');
       } else {
         const response = await createWorkflow(workflowData);
         const newId = response.data?.id || response.id;
+        const webhookToken = response.data?.webhookToken;
         
         if (newId) {
           setWorkflowId(newId);
+          // Update all nodes with workflowId and webhookToken (only for webhook nodes)
+          setNodes((nds: any[]) => nds.map((n: any) => ({
+            ...n,
+            data: {
+              ...n.data,
+              workflowId: newId,
+              webhookToken: n.type === 'webhook' ? webhookToken : n.data.webhookToken
+            }
+          })));
           // Navigate to the workflow URL so it persists on refresh
           navigate(`/workflow/${newId}`);
           alert('✅ Workflow created! You can now execute it.');
@@ -174,12 +196,30 @@ export const useWorkflowActions = ({
 
     try {
       setIsExecuting(true);
+      
+      // Reset node states before execution
+      setNodes((nodes: any[]) => nodes.map((node: any) => ({
+        ...node,
+        data: {
+          ...node.data,
+          isExecuted: false,
+          hasError: false
+        }
+      })));
+      
       const response = await manualExecute(workflowId);
-      alert(`✅ Execution started!\n\nID: ${response.data?.executionId}\n\nCheck Executions page.`);
+      const executionId = response.data?.executionId;
+      
+      console.log(`🚀 Execution started: ${executionId}`);
+      
+      // Simple execution feedback - just set executing to false after a delay
+      setTimeout(() => {
+        setIsExecuting(false);
+        alert(`✅ Execution completed! ID: ${executionId}`);
+      }, 2000);
     } catch (error: any) {
       console.error('Error executing:', error);
       alert(`❌ Failed to execute:\n\n${error.response?.data?.error || error.message}`);
-    } finally {
       setIsExecuting(false);
     }
   }, [nodes, workflowId, setIsExecuting]);

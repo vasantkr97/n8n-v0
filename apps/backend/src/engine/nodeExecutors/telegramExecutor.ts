@@ -55,8 +55,11 @@ export async function executeTelegramAction(
                         const values = Object.values(sourceMap);
                         if (Array.isArray(values) && values.length > 0) {
                             // Prefer a value that has a 'text' string (e.g., Gemini), else use last value
-                            const withText = values.findLast?.((v: any) => v && typeof v === 'object' && typeof v.text === 'string')
-                              || [...values].reverse().find((v: any) => typeof v === 'string' || typeof v === 'object');
+                            const withText = [...values].reverse().find((v: any) => 
+                                (v && typeof v === 'object' && typeof v.text === 'string') || 
+                                typeof v === 'string' || 
+                                typeof v === 'object'
+                            );
                             chosen = withText ?? values[values.length - 1];
                         }
                     }

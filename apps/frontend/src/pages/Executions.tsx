@@ -24,6 +24,7 @@ export default function Executions() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Fetch executions from backend
   const fetchExecutions = async () => {
@@ -41,12 +42,41 @@ export default function Executions() {
     }
   };
 
+  // Initial load
   useEffect(() => {
     fetchExecutions();
-    // Refresh every 5 seconds to show real-time updates
-    const interval = setInterval(fetchExecutions, 5000);
-    return () => clearInterval(interval);
   }, []);
+
+  // Smart polling - only when needed
+  useEffect(() => {
+    // Clear existing interval
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+
+    // Only poll if there are running/pending executions
+    const hasActiveExecutions = executions.some(e => e.status === 'RUNNING' || e.status === 'PENDING');
+    
+    if (hasActiveExecutions && executions.length > 0) {
+      console.log('🔄 Starting smart polling for active executions');
+      const interval = setInterval(() => {
+        console.log('📡 Polling executions...');
+        fetchExecutions();
+      }, 10000); // 10 seconds
+      setPollingInterval(interval);
+    } else {
+      console.log('⏸️ No active executions, stopping polling');
+    }
+
+    // Cleanup on unmount or when component is about to re-render
+    return () => {
+      if (pollingInterval) {
+        console.log('🛑 Cleaning up polling interval');
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [executions]); // Re-run when executions change
 
   const handleCancelExecution = async (executionId: string) => {
     if (!window.confirm('Are you sure you want to cancel this execution?')) {
@@ -79,6 +109,14 @@ export default function Executions() {
   };
 
   const handleViewWorkflow = (workflowId: string) => {
+    // Stop polling before navigation to prevent conflicts
+    if (pollingInterval) {
+      console.log('🛑 Stopping polling before navigation');
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    
+    console.log('🚀 Navigating to workflow:', workflowId);
     navigate(`/workflow/${workflowId}`);
   };
 

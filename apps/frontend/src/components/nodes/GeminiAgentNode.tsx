@@ -25,13 +25,15 @@ const GeminiAgentNode = memo(({ data, selected, id }: NodeProps) => {
         </svg>
       </button>
 
-      {/* Gemini Agent Node Container - Rectangle shape */}
+      {/* Gemini Agent Node Container */}
       <div
-        className={`relative bg-gray-600 w-40 h-24 border-2 transition-all duration-300 flex items-center justify-center rounded-lg ${
-          (data as any)?.isExecuting || (data as any)?.isExecuted
+        className={`relative bg-gray-600 w-28 h-24 border-2 transition-all duration-300 flex items-center justify-center rounded-lg ${
+          (data as any)?.hasError
+            ? 'border-red-500'
+            : (data as any)?.isExecuted
             ? 'border-green-500'
             : (selected ? 'border-gray-500 shadow-lg scale-105' : 'border-white shadow-md')
-        } ${(data as any)?.isExecuting || (data as any)?.isExecuted ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
+        } ${(data as any)?.isExecuted || (data as any)?.hasError ? '' : 'hover:border-orange-500'} hover:shadow-lg hover:scale-102`}
       >
         {/* Input Handle */}
         {!isTrigger && (
@@ -44,49 +46,24 @@ const GeminiAgentNode = memo(({ data, selected, id }: NodeProps) => {
           />
         )}
 
-        {/* Main Output Handle - Right center */}
+        {/* Output Handle */}
         <Handle
           type="source"
           position={Position.Right}
-          id="main-output"
           className="absolute top-1/2 -translate-y-1/2 -right-2
                      bg-gray-400 border-2 border-gray-300 w-3 h-3 rounded-full
                      hover:scale-125 hover:border-orange-500 transition-all duration-200"
         />
 
-        {/* Multiple Output Handles - Bottom edge */}
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="output-1"
-          className="absolute bottom-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-gray-400 border-2 border-gray-300 rounded-full
-                     hover:scale-125 hover:border-orange-500 transition-all duration-200"
-          style={{ left: '25%', bottom: '-6px' }}
-        />
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="output-2"
-          className="absolute bottom-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-gray-400 border-2 border-gray-300 rounded-full
-                     hover:scale-125 hover:border-orange-500 transition-all duration-200"
-          style={{ left: '50%', bottom: '-6px' }}
-        />
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="output-3"
-          className="absolute bottom-0 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-gray-400 border-2 border-gray-300 rounded-full
-                     hover:scale-125 hover:border-orange-500 transition-all duration-200"
-          style={{ left: '75%', bottom: '-6px' }}
-        />
-
-        {/* AI Agent Icon - Professional single color */}
+        {/* Gemini Icon - Clover-style symbol */}
         <div className="flex items-center justify-center">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-            <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-md">
+            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none">
+              <ellipse cx="12" cy="12" rx="6" ry="3.2" fill="white" fillOpacity="0.85"/>
+              <ellipse cx="12" cy="12" rx="6" ry="3.2" transform="rotate(90 12 12)" fill="white" fillOpacity="0.65"/>
+              <ellipse cx="12" cy="12" rx="6" ry="3.2" transform="rotate(45 12 12)" fill="white" fillOpacity="0.45"/>
+              <ellipse cx="12" cy="12" rx="6" ry="3.2" transform="rotate(-45 12 12)" fill="white" fillOpacity="0.45"/>
+              <circle cx="12" cy="12" r="1.6" fill="white"/>
             </svg>
           </div>
         </div>
@@ -101,9 +78,9 @@ const GeminiAgentNode = memo(({ data, selected, id }: NodeProps) => {
       )}
 
       {/* Text Below Node */}
-      <div className="mt-2 flex flex-col items-center text-center max-w-40 mx-auto">
+      <div className="mt-2 flex flex-col items-center text-center max-w-28 mx-auto">
         <div className="text-xs font-medium text-gray-700 leading-tight truncate w-full">
-          {(data as any)?.label || 'Gemini AI'}
+          {(data as any)?.label || 'Gemini'}
         </div>
       </div>
     </div>

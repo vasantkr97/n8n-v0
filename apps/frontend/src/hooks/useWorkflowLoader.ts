@@ -24,29 +24,35 @@ export const useWorkflowLoader = ({
 
   useEffect(() => {
     const loadWorkflow = async () => {
-      console.log('🔄 WorkflowLoader: URL workflow ID:', urlWorkflowId);
+      // If no URL workflow ID, do nothing
       if (!urlWorkflowId) {
-        console.log('⚠️ No workflow ID in URL, skipping load');
+        setIsLoadingWorkflow(false);
         return;
       }
 
       try {
+        console.log('🚀 Loading workflow from URL:', urlWorkflowId);
         setIsLoadingWorkflow(true);
-        console.log('📥 Loading workflow from backend:', urlWorkflowId);
-        const response = await getWorkflowById(urlWorkflowId);
         
+        const response = await getWorkflowById(urlWorkflowId);
         const wf = response.data;
-        if (!wf) return;
+        
+        if (!wf) {
+          console.error('No workflow data received');
+          return;
+        }
 
-        console.log('✅ Workflow loaded successfully:', wf);
+        console.log('✅ Loaded workflow:', wf.title);
+
+        // Set workflow data immediately (this won't save to localStorage due to URL detection)
         setWorkflowId(wf.id);
         setWorkflowTitle(wf.title || 'Untitled Workflow');
         setIsWorkflowActive(wf.isActive || false);
 
+        // Map nodes quickly
         const mappedNodes = (wf.nodes || []).map((n: any, idx: number) => {
           const type = (n.type || '').toLowerCase();
           const cfg = getNodeConfig(type);
-          // Prefer persisted backend id; fallback to name; then to generated
           const id = n.id || n.name || `node-${idx}`;
           const position = Array.isArray(n.position)
             ? { x: n.position[0], y: n.position[1] }
@@ -62,12 +68,12 @@ export const useWorkflowLoader = ({
               parameters: n.parameters || {},
               credentialsId: n.credentials?.id,
               workflowId: wf.id,
-              webhookToken: wf.webhookToken,
+              ...(type === 'webhook' && { webhookToken: wf.webhookToken }),
             },
           };
         });
 
-        // Connections are persisted by node ids (fallback to names on older workflows)
+        // Map edges quickly
         const mappedEdges = (wf.connections || []).map((c: any, idx: number) => ({
           id: `${c.source}-${c.target}-${idx}`,
           source: c.source,
@@ -76,19 +82,22 @@ export const useWorkflowLoader = ({
           data: { itemCount: 1 },
         }));
 
-        console.log('📋 Mapped nodes:', mappedNodes);
-        console.log('🔗 Mapped edges:', mappedEdges);
+        // Set nodes and edges in one batch
         setNodes(mappedNodes);
         setEdges(mappedEdges);
+        
+        console.log('✅ Workflow loaded successfully');
       } catch (error: any) {
-        console.error('Error loading workflow:', error);
-        alert(`Failed to load workflow: ${error.response?.data?.error || error.message}`);
+        console.error('❌ Error loading workflow:', error);
+        setWorkflowId(null);
+        setWorkflowTitle('Error Loading Workflow');
+        setNodes([]);
+        setEdges([]);
       } finally {
         setIsLoadingWorkflow(false);
       }
     };
 
     loadWorkflow();
-  }, [urlWorkflowId, setWorkflowId, setWorkflowTitle, setIsWorkflowActive, setNodes, setEdges, setIsLoadingWorkflow]);
+  }, [urlWorkflowId]); // Only depend on urlWorkflowId to prevent unnecessary re-runs
 };
-

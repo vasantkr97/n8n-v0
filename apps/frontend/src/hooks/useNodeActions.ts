@@ -15,9 +15,10 @@ interface UseNodeActionsProps {
   workflowId: string | null;
   setNodes: any;
   setEdges: any;
+  webhookToken?: string | null;
 }
 
-export const useNodeActions = ({ workflowId, setNodes, setEdges }: UseNodeActionsProps) => {
+export const useNodeActions = ({ workflowId, setNodes, setEdges, webhookToken }: UseNodeActionsProps) => {
   
   const onConnect = useCallback((params: Connection) => {
     const newEdge = createN8nEdge(
@@ -43,6 +44,8 @@ export const useNodeActions = ({ workflowId, setNodes, setEdges }: UseNodeAction
       label: cfg.label,
       description: cfg.description,
       workflowId: workflowId,
+      // Pass webhookToken if this is a webhook node and we have one
+      ...(nodeType === 'webhook' && webhookToken && { webhookToken }),
       onQuickUpdate: (partial: any) => {
         setNodes((nodes: any) => nodes.map((n: any) => {
           if (n.id !== newNodeId) return n;

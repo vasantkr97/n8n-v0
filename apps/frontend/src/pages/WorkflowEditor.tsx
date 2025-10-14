@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ReactFlow, Controls, Background, MiniMap, BackgroundVariant } from "@xyflow/react";
 import '@xyflow/react/dist/style.css';
 
@@ -13,11 +13,8 @@ import { useWorkflowState } from "../hooks/useWorkflowState";
 import { useWorkflowActions } from "../hooks/useWorkflowActions";
 import { useNodeActions } from "../hooks/useNodeActions";
 import { useWorkflowLoader } from "../hooks/useWorkflowLoader";
-
 export default function WorkflowEditor() {
   const state = useWorkflowState();
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  // const [showParametersPanel, setShowParametersPanel] = useState(false);
   const [showNodeSelector, setShowNodeSelector] = useState(false);
 
   const actions = useWorkflowActions({
@@ -31,13 +28,19 @@ export default function WorkflowEditor() {
     setIsExecuting: state.setIsExecuting,
     nodes: state.nodes,
     edges: state.edges,
-    resetWorkflow: state.resetWorkflow
+    resetWorkflow: state.resetWorkflow,
+    setNodes: state.setNodes
   });
+
+  // Get webhookToken from existing webhook nodes or workflow data
+  const webhookNode = state.nodes.find((n: any) => n.type === 'webhook') as any;
+  const webhookToken = webhookNode?.data?.webhookToken || null;
 
   const nodeActions = useNodeActions({
     workflowId: state.workflowId,
     setNodes: state.setNodes,
-    setEdges: state.setEdges
+    setEdges: state.setEdges,
+    webhookToken
   });
 
   useWorkflowLoader({
@@ -48,13 +51,6 @@ export default function WorkflowEditor() {
     setEdges: state.setEdges,
     setIsLoadingWorkflow: state.setIsLoadingWorkflow
   });
-
-  // Always get the fresh node from the nodes array
-  const selectedNode = selectedNodeId 
-    ? state.nodes.find((n: any) => n.id === selectedNodeId) 
-    : null;
-  const selectedNodeType = (selectedNode as any)?.type;
-  const setNodesUnsafe = state.setNodes as unknown as (updater: any) => void;
 
   // inline node popovers handle editing; no central overlay state
 
@@ -112,7 +108,6 @@ export default function WorkflowEditor() {
           onConnect={nodeActions.onConnect}
           onNodeClick={(_event, node: any) => {
             // Only open config on explicit click, not after a drag
-            setSelectedNodeId(node.id);
             // Toggle showConfig only for the clicked node
             const setNodesUnsafe = state.setNodes as unknown as (updater: any) => void;
             setNodesUnsafe((nodes: any[]) => nodes.map((n: any) => ({
@@ -133,7 +128,6 @@ export default function WorkflowEditor() {
               ...n,
               data: { ...n.data, showConfig: false },
             })));
-            setSelectedNodeId(null);
           }}
           nodeTypes={nodeTypes as any}
           edgeTypes={edgeTypes as any}
