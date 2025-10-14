@@ -5,9 +5,12 @@ import Sidebar from "./pages/Sidebar";
 import Credentials from "./pages/Credentials";
 import Executions from "./pages/Executions";
 import Projects from "./pages/Projects";
-import Signin from "./pages/Signin";
-import Signup from "./pages/Signup";
+import Welcome from "./pages/Welcome";
+
+import ForgotPassword from "./pages/ForgotPassword";
 import { Spinner } from "./components/ui";
+import SignIn from "./pages/Signin";
+import SignUp from "./pages/Signup";
 
 
 // Protected Route Component
@@ -38,7 +41,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 // Public Route Component (redirect to dashboard if already authenticated)
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isLoading, authUser } = useAuthUser();
-  
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-gray-950 to-gray-900">
@@ -52,11 +55,11 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (authUser) {
     return <Navigate to="/dashboard" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -76,23 +79,39 @@ export default function App() {
   return (
     <div className="h-screen bg-gray-950">
       <Routes>
-        {/* Public Routes */}
+        {/* Welcome Page */}
         <Route 
-          path="/signin" 
+          path="/" 
           element={
             <PublicRoute>
-              <Signin />
+              <Welcome />
             </PublicRoute>
           } 
         />
 
+        {/* Public Routes */}
         <Route 
-          path="/signup" 
+          path="/signin" 
+          element={
+              <SignIn />
+           
+          } 
+        />
+
+        <Route
+          path="/signup"
+          element={
+              <SignUp />
+          }
+        />
+
+        <Route
+          path="/forgot-password"
           element={
             <PublicRoute>
-              <Signup />
+              <ForgotPassword />
             </PublicRoute>
-          } 
+          }
         />
         
         {/* Protected Routes */}
@@ -157,8 +176,7 @@ export default function App() {
         />
         
         {/* Default Redirects */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );
